@@ -1,0 +1,12 @@
+==10182== NVPROF is profiling process 10182, command: ./MP 0,1,2,3,4,5 80 1 7 1
+==10182== Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==10182== Profiling application: ./MP 0,1,2,3,4,5 80 1 7 1
+==10182== Profiling result:
+==10182== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "Tesla V100-DGXS-32GB (0)"
+    Kernel: kernel(unsigned int*, unsigned int*, unsigned int, unsigned int*, unsigned int, unsigned int, unsigned int)
+          1                    l2_tex_read_throughput             L2 Throughput (Texture Reads)  589.98GB/s  589.98GB/s  589.98GB/s
+          1                   l2_tex_write_throughput            L2 Throughput (Texture Writes)  117.66MB/s  117.66MB/s  117.66MB/s
+          1                        l2_read_throughput                     L2 Throughput (Reads)  589.96GB/s  589.96GB/s  589.96GB/s
+          1                       l2_write_throughput                    L2 Throughput (Writes)  26.385MB/s  26.385MB/s  26.385MB/s

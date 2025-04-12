@@ -1,0 +1,12 @@
+==33187== NVPROF is profiling process 33187, command: ./MP 0 14 1 8 0
+==33187== Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==33187== Profiling application: ./MP 0 14 1 8 0
+==33187== Profiling result:
+==33187== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "Tesla V100-DGXS-32GB (0)"
+    Kernel: kernel(unsigned int*, unsigned int*, unsigned int, unsigned int*, unsigned int, unsigned int, unsigned int)
+          1                    l2_tex_read_throughput             L2 Throughput (Texture Reads)  156.67GB/s  156.67GB/s  156.67GB/s
+          1                   l2_tex_write_throughput            L2 Throughput (Texture Writes)  1.1043MB/s  1.1043MB/s  1.1043MB/s
+          1                        l2_read_throughput                     L2 Throughput (Reads)  156.67GB/s  156.67GB/s  156.67GB/s
+          1                       l2_write_throughput                    L2 Throughput (Writes)  1.2176MB/s  1.2176MB/s  1.2176MB/s
