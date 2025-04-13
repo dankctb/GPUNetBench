@@ -56,6 +56,8 @@ make ARCH=a100
 make OP=read ARCH=h100 SORT=tpc
 ```
 
+L1 cache is disabled with the `-dlcm=cg` flag to ensure only L2 access is measured.
+
 ## Usage
 
 ```

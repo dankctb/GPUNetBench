@@ -84,7 +84,7 @@ __global__ void kernel(unsigned int *a0, unsigned int *value, unsigned int max_s
     unsigned int bid = blockIdx.y%MPnum;
 
     __syncthreads();
-    #ifdef ENABLE_ALL_SMS
+#ifdef ENABLE_ALL_SMS
     // If all SMs are enabled, skip the GPC-based loops
     for (int i = 0; i < ITERATION; i++) {
         for (int b = 0; b < MPnum; b++) {
@@ -97,7 +97,7 @@ __global__ void kernel(unsigned int *a0, unsigned int *value, unsigned int max_s
         }
     }
     a0[sm_id * ADDRESS_BLOCK] = k;
-    #else
+#else
     for (int h = 0; h < GPC_size; h++) {
         if (sm_id == sm_ids1[h] && h < SMmax) {
             for (int i = 0; i < ITERATION; i++) {
@@ -113,7 +113,7 @@ __global__ void kernel(unsigned int *a0, unsigned int *value, unsigned int max_s
             a0[sm_id * ADDRESS_BLOCK] = k;
         }
     }
-    #endif
+#endif
 
 
 }

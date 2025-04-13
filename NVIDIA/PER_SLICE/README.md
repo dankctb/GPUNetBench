@@ -77,6 +77,7 @@ make ARCH=a100 MODE=direct
 |          | • `direct`: Direct SM Mode (`-DUSE_DIRECT_SM`)                              |
 
 The resulting executable is named `SLICE`.
+L1 cache is disabled with the `-dlcm=cg` flag to ensure only L2 access is measured.
 
 ## Usage
 

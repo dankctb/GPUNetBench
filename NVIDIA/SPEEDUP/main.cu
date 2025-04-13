@@ -259,7 +259,7 @@ int main(int argc, char **argv) {
         unifiedSMIDs.insert(unifiedSMIDs.end(), m.sm_ids, m.sm_ids + m.size);
     }
 
-    #ifdef SORT_GPC
+#ifdef SORT_GPC
         // Sort by even-odd first, then by ascending value
         std::sort(unifiedSMIDs.begin(), unifiedSMIDs.end(), [](unsigned int a, unsigned int b) {
             bool a_even = (a % 2 == 0);
@@ -271,10 +271,10 @@ int main(int argc, char **argv) {
             // Both even or both odd → compare numerically
             return a < b;
         });
-    #else
+#else
         // Sort in ascending order only
         std::sort(unifiedSMIDs.begin(), unifiedSMIDs.end());
-    #endif
+#endif
 
     // Keep original mapping size for stride calculation
     int GPCsize = static_cast<int>(unifiedSMIDs.size());

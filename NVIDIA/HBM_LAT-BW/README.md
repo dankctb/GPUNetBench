@@ -38,7 +38,7 @@ Key features of this experiment:
 
 ## Compilation
 
-Use the provided **Makefile** to compile your experiment. The Makefile accepts an architecture variable to set the gencode appropriately:
+Use the provided **Makefile** to compile your experiment. L1 cache is disabled with the `-dlcm=cg` flag to ensure only L2 access or HBM is measured. The Makefile accepts an architecture variable to set the gencode appropriately:
 
 ```bash
 # General form:

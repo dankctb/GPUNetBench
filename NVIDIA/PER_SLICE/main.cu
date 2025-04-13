@@ -64,52 +64,52 @@ struct GPCMapping {
     const unsigned int *sm_ids;
 };
 
-#ifdef USE_A100
-// --------------------- A100 MAPPINGS ---------------------
-static const unsigned int a100_gpc0[] = { 0, 1,14,15,28,29,42,43,56,57,70,71,84,85,98,99 };
-static const unsigned int a100_gpc1[] = { 2, 3,30,31,17,16,73,72,59,58,99,98,45,44,87,86 };
-static const unsigned int a100_gpc2[] = { 4, 5,33,32,19,18,75,74,61,60,101,100,47,46,89,88 };
-static const unsigned int a100_gpc3[] = { 6, 7,20,21,35,34,63,62,77,76,103,102,49,48,91,90 };
-static const unsigned int a100_gpc4[] = { 8, 9,22,23,37,36,79,78,65,64,105,104,51,50,93,92 };
-static const unsigned int a100_gpc5[] = {10,11,39,38,25,24,81,80,95,94,52,53,67,66};
-static const unsigned int a100_gpc6[] = {12,13,40,41,27,26,82,83,55,54,97,96,69,68};
+    #ifdef USE_A100
+    // --------------------- A100 MAPPINGS ---------------------
+    static const unsigned int a100_gpc0[] = { 0, 1,14,15,28,29,42,43,56,57,70,71,84,85,98,99 };
+    static const unsigned int a100_gpc1[] = { 2, 3,30,31,17,16,73,72,59,58,99,98,45,44,87,86 };
+    static const unsigned int a100_gpc2[] = { 4, 5,33,32,19,18,75,74,61,60,101,100,47,46,89,88 };
+    static const unsigned int a100_gpc3[] = { 6, 7,20,21,35,34,63,62,77,76,103,102,49,48,91,90 };
+    static const unsigned int a100_gpc4[] = { 8, 9,22,23,37,36,79,78,65,64,105,104,51,50,93,92 };
+    static const unsigned int a100_gpc5[] = {10,11,39,38,25,24,81,80,95,94,52,53,67,66};
+    static const unsigned int a100_gpc6[] = {12,13,40,41,27,26,82,83,55,54,97,96,69,68};
 
-static const GPCMapping gpcMappings[] = {
-    {16, a100_gpc0}, {16, a100_gpc1}, {16, a100_gpc2},
-    {16, a100_gpc3}, {16, a100_gpc4}, {14, a100_gpc5},
-    {14, a100_gpc6}
-};
+    static const GPCMapping gpcMappings[] = {
+        {16, a100_gpc0}, {16, a100_gpc1}, {16, a100_gpc2},
+        {16, a100_gpc3}, {16, a100_gpc4}, {14, a100_gpc5},
+        {14, a100_gpc6}
+    };
 
-#elif defined(USE_H100)
-// --------------------- H100 MAPPINGS ---------------------
-// This example uses two GPCs for H100.
-static const unsigned int h100_gpc0[] = {
-    0,16,32,48,124,126,128,130,  
-    1,17,33,49,125,127,129,131
-};
-static const unsigned int h100_gpc1[] = {
-   12,28,44,60,74,88,102,116,   
-   120,13,29,45,61,75,89,103,117,121
-};
+    #elif defined(USE_H100)
+    // --------------------- H100 MAPPINGS ---------------------
+    // This example uses two GPCs for H100.
+    static const unsigned int h100_gpc0[] = {
+        0,16,32,48,124,126,128,130,  
+        1,17,33,49,125,127,129,131
+    };
+    static const unsigned int h100_gpc1[] = {
+    12,28,44,60,74,88,102,116,   
+    120,13,29,45,61,75,89,103,117,121
+    };
 
-static const GPCMapping gpcMappings[] = {
-    {16, h100_gpc0}, {18, h100_gpc1}
-};
+    static const GPCMapping gpcMappings[] = {
+        {16, h100_gpc0}, {18, h100_gpc1}
+    };
 
-#else
-// --------------------- V100 MAPPINGS (default) ---------------------
-static const unsigned int gpc0[] = {0,12,24,36,48,60,70,1,13,25,37,49,61,71};
-static const unsigned int gpc1[] = {2,3,14,15,26,27,38,39,50,51,62,63,72,73};
-static const unsigned int gpc2[] = {4,5,16,17,28,29,40,41,52,53,64,65,74,75};
-static const unsigned int gpc3[] = {6,7,18,19,30,31,42,43,54,55,66,67,76,77};
-static const unsigned int gpc4[] = {8,9,20,21,32,33,44,45,56,57,68,69};
-static const unsigned int gpc5[] = {10,11,22,23,34,35,46,47,58,59,78,79};
+    #else
+    // --------------------- V100 MAPPINGS (default) ---------------------
+    static const unsigned int gpc0[] = {0,12,24,36,48,60,70,1,13,25,37,49,61,71};
+    static const unsigned int gpc1[] = {2,3,14,15,26,27,38,39,50,51,62,63,72,73};
+    static const unsigned int gpc2[] = {4,5,16,17,28,29,40,41,52,53,64,65,74,75};
+    static const unsigned int gpc3[] = {6,7,18,19,30,31,42,43,54,55,66,67,76,77};
+    static const unsigned int gpc4[] = {8,9,20,21,32,33,44,45,56,57,68,69};
+    static const unsigned int gpc5[] = {10,11,22,23,34,35,46,47,58,59,78,79};
 
-static const GPCMapping gpcMappings[] = {
-    {14, gpc0}, {14, gpc1}, {14, gpc2},
-    {14, gpc3}, {12, gpc4}, {12, gpc5}
-};
-#endif
+    static const GPCMapping gpcMappings[] = {
+        {14, gpc0}, {14, gpc1}, {14, gpc2},
+        {14, gpc3}, {12, gpc4}, {12, gpc5}
+    };
+    #endif
 
 #endif  // USE_DIRECT_SM
 

@@ -51,7 +51,7 @@ __device__ unsigned int get_smid(void) {
 //
 __device__ unsigned int get_delay(unsigned int x) {
     unsigned int possible_delay[NUM_POSSIBLE_DELAYS];
-    #pragma unroll
+#pragma unroll
     for (unsigned int i = 0; i < NUM_POSSIBLE_DELAYS; i++) {
          possible_delay[i] = i;
     }
@@ -116,7 +116,7 @@ __global__ void kernel(unsigned int* d_data,
     __syncthreads();
 
     // Main measurement loop.
-    #pragma unroll 1
+#pragma unroll 1
     for (int i = 0; i < NUM_ITERATIONS; i++) {
 
 #ifdef USE_RANDOM_ACCESS

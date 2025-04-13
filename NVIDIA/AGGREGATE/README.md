@@ -38,8 +38,17 @@ BW is a benchmark program designed to measure both L2 cache and HBM (High-Bandwi
 
 ## Compilation
 
-Compile the code using the given Makefile. L1 cache is disabled with the `-dlcm=cg` flag to ensure only L2 access or HBM is measured. The code is compiled with compute capability support for V100, but it supports A100 and H100.
-Please modify `--gpu-architecture=compute_70` and `--gpu-code=sm_70` with your desired architecure (A100 is 80, H100 is 90)
+Use the provided **Makefile** to compile the experiment. L1 cache is disabled with the `-dlcm=cg` flag to ensure only L2 access or HBM is measured. The Makefile accepts an architecture variable to set the gencode appropriately:
+
+```bash
+# General form:
+make ARCH=<v100|a100|h100>
+
+# Examples:
+make ARCH=v100
+make ARCH=a100
+make ARCH=h100
+```
 
 
 ## Usage
