@@ -49,6 +49,9 @@ Key features:
 - **Rows:** Number of L2 slices (V100=32, A100=80, H100=6)  
 - **Columns:** 32 columns  
 - Each row represents the per‑SM indices for that L2 slice.
+- A100 slices are sorted in order that every 40 L2 slices, a different L2 partition is accessed. 
+- A100 and H100 have a partitioned L2 cache with two L2 partitions containing 40 L2 slices each.
+- The two L2 partitions are interconnected, but in H100 each SM can access only the local partition.
 
 ## Compilation
 
