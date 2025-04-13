@@ -12,8 +12,8 @@ def main():
                         help="Three input files to load (default: 1_all.log 32_all.log 64_all.log)")
     parser.add_argument("--legends", nargs=3, default=["1 Threads", "32 Threads", "64 Threads"],
                         help="Three legend labels (default: '1 Threads', '32 Threads', '64 Threads')")
-    parser.add_argument("--binstep", type=float, default=10,
-                        help="Bin step size (default: 10)")
+    parser.add_argument("--binstep", type=float, default=100,
+                        help="Bin step size (default: 100)")
     parser.add_argument("--xrange", nargs=2, type=float, default=[100, 500],
                         help="X-axis range as two numbers (default: 100 500)")
     parser.add_argument("--ylim", type=float, default=30,

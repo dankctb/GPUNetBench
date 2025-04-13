@@ -4,7 +4,7 @@
 #
 # Command-line arguments:
 #   $1: run_mode                (ncu or normal)
-#   $2: access_pattern          (stream, strided, random) [default: stream]
+#   $2: access_pattern          (stream, random) [default: stream]
 #   $3: random_delay            (0 or 1) [default: 0]
 #   $4: random_delay_method     (thread or warp) [default: thread]
 #   $5: random_delay_steps      (integer) [default: 32]

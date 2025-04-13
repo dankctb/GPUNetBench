@@ -154,20 +154,6 @@ __global__ void kernel(unsigned int* d_data,
 }
 
 //
-// Warm-up kernel.
-//
-__global__ void k(unsigned int* d, int len, int lps) {
-    for (int l = 0; l < lps; l++) {
-        for (int i = threadIdx.x + blockDim.x * blockIdx.x; 
-             i < len; 
-             i += gridDim.x * blockDim.x)
-        {
-            d[0] += d[i];
-        }
-    }
-}
-
-//
 // Host code (main).
 // Command-line options:
 //   -t <threads_per_CTA>   (default: 1)
@@ -281,10 +267,6 @@ int main(int argc, char* argv[]) {
     // Set grid and block dimensions.
     dim3 grid(numSM * CTAs_per_SM);
     dim3 block(threads_per_CTA);
-    
-    // Warm-up.
-    k<<<grid, block>>>(d_data, data_size, 1);
-    cudaDeviceSynchronize();
     
     // Allocate dynamic shared memory (one unsigned int per thread).
     size_t sharedMemSize = threads_per_CTA * sizeof(unsigned int);
