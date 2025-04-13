@@ -1,14 +1,13 @@
-# L2 Cache Latency-Throughput and Latency Distribution
+# HBM Cache Latency-Throughput and Latency Distribution
 
 ## Overview
 
-This experiment is designed to study the latency and throughput of L2 cache accesses under varying injection rates and different access patterns. The traffic pattern is such that all SMs access all L2 slices. The goal is to characterize the latency distribution as the number of threads per CTA is varied and to assess the impact of adding a random delay before each memory access injection. The random delay is introduced with the hypothesis that it will help “schedule” injections to reduce contention in the interconnect network. The expected outcome is a reduction in both the tail and the average of the latency distribution, leading to increased bandwidth and decreased overall execution time compared to runs without delay.
+This experiment is designed to study the latency and throughput of HBM accesses under varying injection rates and different access patterns. The traffic pattern is such that all SMs access all L2 slices, always obtaining a L2 cache miss. Each data element is read only once to avoid cache reuse and all the Global Memory is allocated. The goal is to characterize the latency distribution as the number of threads per CTA is varied and to assess the impact of adding a random delay before each memory access injection. The random delay is introduced with the hypothesis that it will help “schedule” injections to reduce contention in the interconnect network. The expected outcome is a reduction in both the tail and the average of the latency distribution, leading to increased bandwidth and decreased overall execution time compared to runs without delay.
 
 Key features of this experiment:
 - **Injection Rate Variation:** By modifying the number of threads per CTA (from as low as 1 up to 1024), the experiment evaluates how different injection rates affect latency and throughput.
 - **Access Patterns:** The kernel supports three access patterns:
   - **Stream Access** – Each thread computes its access address on every iteration.
-  - **Strided Access** – An initial address is computed once and then incremented by a constant stride.
   - **Random Access** – Starting addresses are randomly generated for each thread and then updated with a fixed stride.
 - **Random Delay Injection:** Optionally, a random delay can be added before each memory access. This delay (a simple add instruction) can be controlled at compile time and set either per thread or per warp with a selectable number of delay steps.
 - **Latency Measurement:** When enabled at compile time, the kernel uses `clock()` functions to measure latency. This data is then output, allowing the analysis of both the full latency distribution and the average latency.
@@ -28,11 +27,11 @@ Key features of this experiment:
 ## Folder Structure
 
 ```
-├── main.cu         # CUDA/C++ source code for the L2 cache experiment
+├── main.cu         # CUDA/C++ source code for the HBM experiment
 ├── Makefile        # Build configuration (architecture flags for V100, A100, H100)
 ├── run.sh          # Script to automate compiling and running the experiment
 ├── hist.py         # Python plotting script to generate latency histograms
-├── lat-bw.py  # Python plotting script to generate latency-throughput plots
+├── lat-bw.py       # Python plotting script to generate latency-throughput plots
 ├── parse_logs.sh   # Script to parse ncu-generated logs and produce two output files (bandwidth and kernel execution time)
 └── README.md       # This documentation file
 ```
@@ -145,7 +144,7 @@ A Python script (`hist.py`) is provided to generate histograms from the latency 
 
 ### Latency-Throughput Plots
 
-Another Python script, **lat-bw.py**, is provided to plot L2 throughput versus average latency (or kernel execution time) for multiple data series.  
+Another Python script, **lat-bw.py**, is provided to plot HBM throughput versus average latency (or kernel execution time) for multiple data series.  
 Each data series is represented by a pair of files:
 - A **bandwidth file** (x–axis values, in GB/s).
 - A **latency (or execution time) file** (y–axis values; if latency, in clock cycles; if execution time, in microseconds).
@@ -168,7 +167,7 @@ python3 lat-bw.py --bw_files BW_stream_2.log BW_stream_2_rand_delay_warp_32.log 
                        --yaxis exec_time --output latency_throughput.png
 ```
 
-This command plots the L2 throughput (GB/s) on the x–axis (in log₂ scale) versus average latency (in clock cycles) for each data series. Use `--yaxis exec_time` to plot kernel execution time (in µs) on the y–axis instead.
+This command plots the HBM throughput (GB/s) on the x–axis (in log₂ scale) versus average latency (in clock cycles) for each data series. Use `--yaxis exec_time` to plot kernel execution time (in µs) on the y–axis instead.
 
 #### Plot Settings
 
