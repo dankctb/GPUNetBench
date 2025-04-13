@@ -9,12 +9,12 @@
 #
 #   For each file (sorted in ascending order by threads_per_CTA), two metrics are extracted:
 #
-#   1. From the line containing:
+#   1. From the **second** line containing:
 #          l1tex__m_xbar2l1tex_read_bytes.sum.per_second
 #      the script extracts the last numeric value. It then checks if this line contains
-#      "GB/s". If not - if it contains "TB/s" - it converts the value to GB/s.
+#      "GByte/s". If not – if it contains "TByte/s" – it converts the value to GByte/s.
 #
-#   2. From the line containing:
+#   2. From the **second** line containing:
 #          gpu__time_duration.avg
 #      the script extracts the last numeric value. It then checks if this line already has the unit:
 #         - If "us" is present, no conversion is done.
@@ -83,27 +83,24 @@ for file in $sorted_files; do
     # For ordering, we assume the file name's second field is the threads_per_CTA,
     # but we no longer output that value.
     
-    # Extract the primary metric line.
-    line1=$(grep -m 1 "l1tex__m_xbar2l1tex_read_bytes.sum.per_second" "$file")
+    # Extract the second occurrence of the primary metric line.
+    line1=$(grep " l1tex__m_xbar2l1tex_read_bytes.sum.per_second " "$file" | sed -n '2p')
     if [ -z "$line1" ]; then
-        echo "Warning: Primary metric not found in $file" >&2
+        echo "Warning: Second occurrence of primary metric not found in $file" >&2
         continue
     fi
     num1=$(extract_last_number "$line1")
     # Convert to GB/s if necessary.
-    if [[ "$line1" == *"GB/s"* ]]; then
+    if [[ "$line1" == *"Gbyte/s"* ]]; then
         gbps="$num1"
-    elif [[ "$line1" == *"TB/s"* ]]; then
+    elif [[ "$line1" == *"Tbyte/s"* ]]; then
         gbps=$(awk -v val="$num1" 'BEGIN { printf "%.3f", val*1e3 }')
-    else
-        # Assume B/s if no unit is found.
-        gbps=$(awk -v val="$num1" 'BEGIN { printf "%.3f", val/1e9 }')
     fi
 
-    # Extract the second metric line.
-    line2=$(grep -m 1 "gpu__time_duration.avg" "$file")
+    # Extract the second occurrence of the second metric line.
+    line2=$(grep "gpu__time_duration.avg" "$file" | sed -n '2p')
     if [ -z "$line2" ]; then
-        echo "Warning: Second metric not found in $file" >&2
+        echo "Warning: Second occurrence of second metric not found in $file" >&2
         continue
     fi
     num2=$(extract_last_number "$line2")
