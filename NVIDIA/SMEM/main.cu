@@ -158,6 +158,7 @@ int main(int argc, char **argv) {
 
 #ifdef CALC_BW
   unsigned long long sumC=0; double sumBW=0;
+  double sumTimeUs=0; // Sum of execution times in microseconds
   unsigned long long bytes = (unsigned long long)numInts*sizeof(int)*ITERATION;
   printf("\nPer-block Bandwidth:\n");
   for (int b = 0; b < numBlocks; b++) {
@@ -165,13 +166,15 @@ int main(int argc, char **argv) {
     unsigned sm = (unsigned)h_out[i];
     unsigned long long cyc = h_out[i+1];
     double bw = (bytes/(double)cyc)*freq/1e9;
-    printf("Block %d | SM %u | Cycles %llu | BW %.4f GB/s\n",
-           b, sm, cyc, bw);
+    double execTimeUs = (cyc / freq) * 1e6; // Calculate execution time in microseconds
+    printf("Block %d | ILP %u | SM %u | Time %.2f us | BW %.4f GB/s\n",
+           b, ILP_FACTOR, sm, execTimeUs, bw);
     sumC += cyc; sumBW += bw;
+    sumTimeUs += execTimeUs;
   }
   printf("\nAggregate:\n");
-  printf("Avg cycles=%.2f  Sum BW=%.2f GB/s\n",
-         sumC/(double)numBlocks, sumBW);
+  printf("Avg time=%.2f us  Sum BW=%.2f GB/s\n",
+         sumTimeUs / numBlocks, sumBW);
 #else
   double sumLat=0;
   printf("\nPer-block Latency:\n");
@@ -182,8 +185,8 @@ int main(int argc, char **argv) {
     for (int t = 0; t < blockSize; t++)
       blk += h_out[base+2+t];
     double avg = blk/(double)blockSize;
-    printf("Block %d | SM %u | Avg Lat %.4f cycles\n",
-           b, sm, avg);
+    printf("Block %d | ILP %u | SM %u | Avg Lat %.4f cycles\n",
+           b, ILP_FACTOR, sm, avg);
     sumLat += avg;
   }
   printf("\nAggregate:\n");

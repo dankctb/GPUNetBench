@@ -83,7 +83,7 @@ chmod +x run.sh
 ./run.sh
 ```
 This script will:
-- Loop through ILP factors: `1, 2, 4, 8, 16, 32, 64`
+- Loop through ILP factors: `1, 2, 4, 8`
 - Loop through block sizes: `32, 64, 128, 256, 512, 1024`
 - Loop through stride values: `1, 2, 4, 8, 16, 32`
 - For each configuration, compile and run the benchmark with 1 block.

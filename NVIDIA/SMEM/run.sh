@@ -13,7 +13,7 @@
 # Output files are named using the mode, access pattern, stride, block size, and number of blocks.
 #
 # Define arrays for ILP factors, block sizes (threads per block) or stride.
-ILP_FACTORS=(1 2 4 8 16 32 64)
+ILP_FACTORS=(1 2 4 8)
 BLOCK_SIZES=(32 64 128 256 512 1024)
 STRIDE=(1 2 4 8 16 32)
 BLOCKS=1
