@@ -121,7 +121,9 @@ int main(int argc, char **argv) {
   int blockSize = atoi(argv[1]);
   int numBlocks = atoi(argv[2]);
 
-  int dev;  cudaGetDevice(&dev);
+  // Device setup
+  int dev = 0;  
+  cudaGetDevice(&dev);
   cudaDeviceProp prop;
   cudaGetDeviceProperties(&prop, dev);
 
