@@ -50,37 +50,35 @@ __syncthreads();
 
   // Access loop (stride=STRIDE; if STRIDE==1 → streaming)
   for (int rep = 0; rep < ITERATION; rep++) {
-    for (int off = 0; off < STRIDE; off++) {
-      int idx = threadIdx.x * STRIDE + off;
-      // bulk via ILP
-      for (; idx + (ILP_FACTOR-1)*blockDim.x*STRIDE < numInts;
-           idx += blockDim.x*ILP_FACTOR*STRIDE)
-      {
+    int idx = threadIdx.x * STRIDE;
+    // bulk via ILP
+    for (; idx + (ILP_FACTOR-1)*blockDim.x*STRIDE < numInts;
+          idx += blockDim.x*ILP_FACTOR*STRIDE)
+    {
 #ifdef CALC_LATENCY
-        unsigned long long t0 = clock();
+      unsigned long long t0 = clock();
 #endif
 #pragma unroll
-        for (int j = 0; j < ILP_FACTOR; j++) {
-          local_sum += sdata[idx + j*blockDim.x*STRIDE];
-        }
-#ifdef CALC_LATENCY
-        unsigned long long t1 = clock();
-        lat_acc += (t1 - t0);
-        lat_cnt++;
-#endif
+      for (int j = 0; j < ILP_FACTOR; j++) {
+        local_sum += sdata[idx + j*blockDim.x*STRIDE];
       }
-      // remainder
-      for (; idx < numInts; idx += blockDim.x*STRIDE) {
 #ifdef CALC_LATENCY
-        unsigned long long t0 = clock();
+      unsigned long long t1 = clock();
+      lat_acc += (t1 - t0);
+      lat_cnt++;
 #endif
-        local_sum += sdata[idx];
+    }
+    // remainder
+    for (; idx < numInts; idx += blockDim.x*STRIDE) {
 #ifdef CALC_LATENCY
-        unsigned long long t1 = clock();
-        lat_acc += (t1 - t0);
-        lat_cnt++;
+      unsigned long long t0 = clock();
 #endif
-      }
+      local_sum += sdata[idx];
+#ifdef CALC_LATENCY
+      unsigned long long t1 = clock();
+      lat_acc += (t1 - t0);
+      lat_cnt++;
+#endif
     }
   }
 

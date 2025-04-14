@@ -89,36 +89,34 @@ void kernel(unsigned long long *out,
 #endif
 
     for (int rep = 0; rep < ITERATION; rep++) {
-      for (int off = 0; off < STRIDE; off++) {
-        int idx = threadIdx.x * STRIDE + off;
-        // ILP‑unrolled main chunk
-        for (; idx + (ILP_FACTOR - 1) * blockDim.x * STRIDE < num_ints;
-             idx += blockDim.x * ILP_FACTOR * STRIDE) {
+      int idx = threadIdx.x * STRIDE;
+      // ILP‑unrolled main chunk
+      for (; idx + (ILP_FACTOR - 1) * blockDim.x * STRIDE < num_ints;
+            idx += blockDim.x * ILP_FACTOR * STRIDE) {
 #ifdef CALC_LATENCY
-          unsigned long long t0 = clock();
+        unsigned long long t0 = clock();
 #endif
 #pragma unroll
-          for (int j = 0; j < ILP_FACTOR; j++)
-            local_sum += ws[idx + j * blockDim.x * STRIDE];
+        for (int j = 0; j < ILP_FACTOR; j++)
+          local_sum += ws[idx + j * blockDim.x * STRIDE];
 #ifdef CALC_LATENCY
-          unsigned long long t1 = clock();
-          lat_acc += (t1 - t0);
-          lat_cnt++;
+        unsigned long long t1 = clock();
+        lat_acc += (t1 - t0);
+        lat_cnt++;
 #endif
-        }
-        // tail
-        for (; idx < num_ints; idx += blockDim.x * STRIDE) {
-#ifdef CALC_LATENCY
-          unsigned long long t0 = clock();
-#endif
-          local_sum += ws[idx];
-#ifdef CALC_LATENCY
-          unsigned long long t1 = clock();
-          lat_acc += (t1 - t0);
-          lat_cnt++;
-#endif
-        }
       }
+      // tail
+      for (; idx < num_ints; idx += blockDim.x * STRIDE) {
+#ifdef CALC_LATENCY
+        unsigned long long t0 = clock();
+#endif
+        local_sum += ws[idx];
+#ifdef CALC_LATENCY
+        unsigned long long t1 = clock();
+        lat_acc += (t1 - t0);
+        lat_cnt++;
+#endif
+        }
     }
 
     __syncthreads();
