@@ -13,8 +13,8 @@
 #define ILP_FACTOR 8
 #endif
 
-#ifndef REPS
-#define REPS 100000
+#ifndef ITERATION
+#define ITERATION 100000
 #endif
 
 #ifndef STRIDE
@@ -88,7 +88,7 @@ void kernel(unsigned long long *out,
     unsigned long long startCycles = clock64();
 #endif
 
-    for (int rep = 0; rep < REPS; rep++) {
+    for (int rep = 0; rep < ITERATION; rep++) {
       for (int off = 0; off < STRIDE; off++) {
         int idx = threadIdx.x * STRIDE + off;
         // ILP‑unrolled main chunk
@@ -208,7 +208,7 @@ int main(int argc, char **argv) {
     unsigned long long destSM = h_out[3*i + 0];
     unsigned long long srcSM  = h_out[3*i + 1];
     unsigned long long cycles = h_out[3*i + 2];
-    unsigned long long bytes  = (unsigned long long)num_ints * sizeof(int) * REPS;
+    unsigned long long bytes  = (unsigned long long)num_ints * sizeof(int) * ITERATION;
     double bpc = (double)bytes / (double)cycles;
     double bw  = bpc * clkHz / 1e9;
     printf("Cluster %d destSM %llu srcSM %llu Bandwidth %.4f GB/s\n",
