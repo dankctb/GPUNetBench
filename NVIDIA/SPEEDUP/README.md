@@ -80,7 +80,7 @@ L1 cache is disabled with the `-dlcm=cg` flag to ensure only L2 access is measur
 
 ```bash
 # 2 CTAs/SM, 32 warps/CTA, 100 iterations, GPCs 0 and 1, top 10 SMs
-./your_program 2 32 100 0,1 10
+./SPEEDUP 2 32 100 0,1 10
 ```
 
 ## Automated Runs & Profiling
