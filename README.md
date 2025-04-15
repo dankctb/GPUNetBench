@@ -2,13 +2,6 @@
 
 This repository contains CUDA-based benchmarks designed to evaluate various aspects of GPU memory and interconnection network on NVIDIA GPUs (V100, A100, H100). Each benchmark focuses on distinct architectural components, using as metrics bandwidth, latency and execution time.
 
-These benchmarks were utilized in the research described in our publications and master's thesis:
-
-- [MICRO] Zhixian Jin, Christopher Rocca, Jiho Kim, Hans Kasan, Minsoo Rhu, Ali Bakhoda, Tor Aamodt, John Kim. "Uncovering Real GPU NoC Characteristics: Implications on Interconnect Architecture". In Proceedings of the 57th International Symposium on Microarchitecture (MICRO), Austin, TX, Nov. 2024.
-- [Master's Thesis] Christopher Rocca, "GPU NoC",  Korea Advanced Institute of Science and Technology (KAIST), 2025.
-
-Please cite these references if you use this repository in your work.
-
 ## Repository Structure
 
 ```
