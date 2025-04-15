@@ -2,7 +2,7 @@
 
 ## Overview
 
-**SPEEDUP** is a CUDA/C++ program that selects one or more Graphics Processing Clusters (GPCs) (CPC for H100 is also supported) and runs a microbenchmark on a chosen subset of Streaming Multiprocessors (SMs) within those GPCs (or CPC). It measures aggregate bandwidth (GB/s) to L2 cache by executing either read‑based or write‑based kernels in a streaming way.
+`SPEEDUP` is a benchmark that selects one or more Graphics Processing Clusters (GPCs) (CPC for H100 is also supported) and runs a microbenchmark on a chosen subset of Streaming Multiprocessors (SMs) within those GPCs (or CPC). It measures aggregate bandwidth (GB/s) to L2 cache by executing either read‑based or write‑based kernels in a streaming way.
 
 **Key features:**
 - **Multi‑GPU support**: V100 (default), A100, H100, H100CPC
@@ -121,8 +121,3 @@ In `main.cu`, you can also manually control:
 ```
 
 These are automatically handled by the `Makefile` when you pass `OP=read`, `ARCH=a100|h100`, or `SORT=tpc`.
-
-## License
-
-This project is released under the MIT License. Feel free to use, modify, and distribute.
-

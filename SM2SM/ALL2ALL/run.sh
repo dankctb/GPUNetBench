@@ -86,7 +86,7 @@ for traffic in "${TRAFFIC_PATTERNS[@]}"; do
 
             echo "${MODE_NAME} Mode: Running with NUM_CLUSTERS=${NUM_CLUSTERS} and BLOCK_SIZE=${bs}" | tee -a "$outfile"
             # Run the benchmark with runtime parameters: numClusters and blockSize.
-            ./SMEM ${NUM_CLUSTERS} ${bs} >> "$outfile"
+            ./SM2SM ${NUM_CLUSTERS} ${bs} >> "$outfile"
 
             echo "${MODE_NAME} test complete for traffic pattern '${traffic}' with block size ${bs}. Results in ${outfile}"
             echo

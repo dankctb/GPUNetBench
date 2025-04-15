@@ -1,6 +1,6 @@
 # SM2SM Communication One‑to‑One Benchmark
 
-This experiment measures the **bandwidth** and **latency** of SM→SM communication within a GPC on an NVIDIA H100 GPU. It leverages two H100‑specific features:
+This benchmark measures the **bandwidth** and **latency** of SM→SM communication within a GPC on an NVIDIA H100 GPU. It leverages two H100‑specific features:
 
 - **Distributed Shared Memory (DSM)**
 - **Thread‑Block Clusters** (with a fixed cluster size of 16 that is guaranteed to reside on one GPC)
@@ -163,9 +163,3 @@ After completion, the script prints messages indicating where the results are st
 - **Access Pattern:**  
   - **Stream Access (`STRIDE=1`):** each thread accesses a different SMEM bank  
   - **Strided Access (`STRIDE>1`):** simulates bank conflicts by accessing with a stride
-
----
-
-## License
-
-This project is released under the MIT License. Feel free to use, modify, and distribute.

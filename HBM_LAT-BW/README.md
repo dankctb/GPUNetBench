@@ -183,6 +183,3 @@ This command plots the HBM throughput (GB/s) on the x–axis (in log₂ scale) v
 - **With Random Delay:**  
   Randomizing the injection schedule is expected to smooth the latency distribution, reduce both tail latency and average latency, increase effective bandwidth, and reduce overall execution time compared to previous case.
 
-## License
-
-This project is released under the MIT License. Feel free to use, modify, and distribute the code.

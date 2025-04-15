@@ -1,8 +1,6 @@
 #!/bin/bash
 #
-# This script will run the Local SMem benchmark compiled from main.cu.
-#
-# It uses the following compile‑time definitions:
+# The code uses the following compile‑time definitions:
 #   - Access pattern is set via: -DSTRIDE (if set to 1, it is a stream access, otherwise it is a strided access)
 #   - The ILP unrolling factor is set via -DILP_FACTOR
 #   - Measurement mode: either -DCALC_LATENCY or -DCALC_BW

@@ -2,7 +2,7 @@
 
 ## Overview
 
-BW is a benchmark program designed to measure both L2 cache and HBM (High-Bandwidth Memory) read aggregate bandwidth on NVIDIA GPUs. It achieves this by issuing coalesced memory accesses to target either L2 cache or HBM, depending on runtime parameters. By setting the data size multiplier to 1 and using a high loop count, the kernel stresses L2 cache accesses; Otherwise, setting the data size multiplier to a high value while using a single loop targets HBM accesses.
+`BW`s is a benchmark program designed to measure both L2 cache and HBM (High-Bandwidth Memory) read aggregate bandwidth on NVIDIA GPUs. It achieves this by issuing coalesced memory accesses to target either L2 cache or HBM, depending on runtime parameters. By setting the data size multiplier to 1 and using a high loop count, the kernel stresses L2 cache accesses; Otherwise, setting the data size multiplier to a high value while using a single loop targets HBM accesses.
 
 **Key features:**
 - Measures both L2 cache and HBM (global memory) read bandwidth.
@@ -121,8 +121,3 @@ To run the scripts, ensure that the following Python libraries are installed:
 ```bash
 pip install numpy pandas matplotlib
 ```
-
-## License
-
-This project is released under the MIT License. Feel free to use, modify, and distribute.
-

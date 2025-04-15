@@ -2,7 +2,7 @@
 
 ## Overview
 
-This experiment is designed to evaluate the latency and bandwidth of local shared memory (SMEM) on an NVIDIA GPU under various injection levels. The primary goal is to assess how changes in the number of threads per block (injection rate) and the ILP (instruction-level parallelism) unrolling factor affect performance. Two access patterns are provided:
+This benchmark is designed to evaluate the latency and bandwidth of local shared memory (SMEM) on an NVIDIA GPU under various injection levels. The primary goal is to assess how changes in the number of threads per block (injection rate) and the ILP (instruction-level parallelism) unrolling factor affect performance. Two access patterns are provided:
 
 - **Stream Access:** Executed by using a stride value of 1. Each thread in a warp will access a different SMEM bank.
 - **Strided Access:** Executed by setting the stride to a value greater than 1. This mode simulates different shared memory bank conflict scenarios—the higher the stride (beyond 1), the more bank conflicts are likely to occur, which negatively impacts performance.
@@ -96,7 +96,3 @@ The main objectives of this benchmark are to:
 - **Evaluate SMEM bandwidth:** Determine the effective bandwidth of SMEM under different thread and ILP configurations.
 - **Study Bank Conflicts:** Compare streaming (STRIDE=1) vs. strided access patterns to understand the impact of bank conflicts on performance. A streaming access pattern should show no bank conflicts, whereas increasing stride values will likely increase conflicts, thereby reducing performance.
 - **Injection Rate Impact:** By modifying block size (injection rate) and ILP factors (injection burst size), evaluate how performance scales with different levels of memory access contention.
-
-## License
-
-This project is released under the MIT License. You are free to use, modify, and distribute this code.

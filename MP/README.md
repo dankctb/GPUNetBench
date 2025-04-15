@@ -2,8 +2,7 @@
 
 ## Overview
 
-`MP` is a CUDA/C++ program that selects one or more Graphics Processing Clusters (GPCs) and runs a kernel on 
-specific Streaming Multiprocessors (SMs) within the set of selected GPCs. 
+`MP` is a benchmark that selects one or more Graphics Processing Clusters (GPCs) and runs a kernel on specific Streaming Multiprocessors (SMs) within the set of selected GPCs. 
 It performs non‑coalesced memory accesses to L2 cache slices defined by rows of an external CSV matrix previously collected.
 
 Key features:
@@ -69,7 +68,7 @@ The code is compiled in the executibile file provided. L1 cache is disabled thro
 **Example:**
 ```bash
 # Select GPC 0 and 1, up to SM 20, use 2 MPs (IDs 0 and 3)
-./sameGPC 0,1 20 2 0 3
+./MP 0,1 20 2 0 3
 ```
 
 This run will access 16 slices (2 MPs × 8 slices each) on SMs of GPC1 up to index 14.
@@ -104,8 +103,3 @@ Defined at compile time via macros in `main.cu`:
 ```
 Adjust this value and recompile if needed.
 Do not modify the other macros.
-
-## License
-
-This project is released under the MIT License. Feel free to use, modify, and distribute.
-

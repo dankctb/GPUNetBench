@@ -1,8 +1,6 @@
 #!/bin/bash
 #
-# This script will run the SM2SM benchmark compiled from main.cu.
-#
-# It uses the following compile‑time definitions:
+# The code uses the following compile‑time definitions:
 #   - ILP unrolling factor is set via: -DILP_FACTOR
 #   - Measurement mode: either -DCALC_LATENCY or -DCALC_BW
 #
@@ -62,7 +60,7 @@ for mode in latency bw; do
                 continue
             fi
             echo "${MODE_NAME} Mode: rt_destSM=${dest}, rt_srcSM=${src}" | tee -a "$outfile"
-            ./SMEM ${dest} ${src} ${NUM_CLUSTERS} ${BLOCK_SIZE} >> "$outfile"
+            ./SM2SM ${dest} ${src} ${NUM_CLUSTERS} ${BLOCK_SIZE} >> "$outfile"
         done
     done
 

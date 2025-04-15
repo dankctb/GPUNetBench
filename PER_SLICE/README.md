@@ -2,7 +2,7 @@
 
 ## Overview
 
-**SLICE** is a CUDA/C++ program that supports two modes of targeting Streaming Multiprocessors (SMs) to perform non‑coalesced access to a target L2 cache slice:
+`SLICE` is a benchmark that supports two modes of targeting Streaming Multiprocessors (SMs) to perform non‑coalesced access to a target L2 cache slice:
 
 - **GPC Mode (default):** Select one or more Graphics Processing Clusters (GPCs) and activate up to a maximum number of SMs within them, then perform read accesses to a user‑specified L2 slice.
 - **Direct SM Mode:** Compile with `-DUSE_DIRECT_SM` to target a single SM (specified on the command line) and a single L2 slice.
@@ -212,8 +212,3 @@ Adjust at compile time in `main.cu`:
 ```
 
 Recompile after modifying. Do not alter other macros.
-
-## License
-
-This project is released under the MIT License. Feel free to use, modify, and distribute.
-

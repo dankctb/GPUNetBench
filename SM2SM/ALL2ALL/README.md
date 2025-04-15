@@ -181,9 +181,3 @@ To adjust any of these parameters (such as ILP factor, number of iterations, or 
   
 - **Performance Characterization:**  
   Assess both overall bandwidth and per-request latency under different injection rates and access patterns.
-
----
-
-## License
-
-This project is released under the MIT License. Feel free to use, modify, and distribute the code as needed.
