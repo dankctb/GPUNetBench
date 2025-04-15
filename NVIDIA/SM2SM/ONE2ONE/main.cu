@@ -124,17 +124,13 @@ void kernel(unsigned long long *out,
 #ifdef CALC_BW
     unsigned long long totalCycles = clock64() - startCycles;
     unsigned int my_smid = get_smid();
-    // slot 1 per cluster holds srcSM
     out[3 * cluster_id + 1] = my_smid;
-    // slot 2 per cluster holds cycle count
     out[3 * cluster_id + 2] = totalCycles;
-#else  // CALC_LATENCY
+#endif
+#ifdef CALC_LATENCY  // CALC_LATENCY
     unsigned long long avgLat = lat_cnt ? (lat_acc / lat_cnt) : 0;
     int base = cluster_id * (blockDim.x + 2);
-    // [base+0] = destSM (from warm)
-    // [base+1] = srcSM
     out[base + 1] = get_smid();
-    // [base+2 ... base+2+blockDim.x-1] = per-thread avgLat
     out[base + 2 + threadIdx.x] = avgLat;
 #endif
   }

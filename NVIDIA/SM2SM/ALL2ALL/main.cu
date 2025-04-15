@@ -202,13 +202,30 @@ void kernel(unsigned long long *out,
         for (int rep = 0; rep < ITERATION; rep++) {
             int idx = local_tid * STRIDE;
             for (; idx + (ILP_FACTOR - 1) * group_size * STRIDE < partner_read_limit;
-                 idx += group_size * ILP_FACTOR * STRIDE) {
+                idx += group_size * ILP_FACTOR * STRIDE) {
+#ifdef CALC_LATENCY
+                unsigned long long t0 = clock();
+#endif
 #pragma unroll
                 for (int j = 0; j < ILP_FACTOR; j++)
                     local_sum += ws[idx + j * group_size * STRIDE];
+#ifdef CALC_LATENCY
+                unsigned long long t1 = clock();
+                lat_acc += (t1 - t0);
+                lat_cnt++;
+#endif
             }
-            for (; idx < partner_read_limit; idx += group_size * STRIDE)
+            for (; idx < partner_read_limit; idx += group_size * STRIDE){
+#ifdef CALC_LATENCY
+                unsigned long long t0 = clock();
+#endif
                 local_sum += ws[idx];
+#ifdef CALC_LATENCY
+                unsigned long long t1 = clock();
+                lat_acc += (t1 - t0);
+                lat_cnt++;
+#endif
+            }
         }
     }
 #else   // Single‑partner traffic patterns.
@@ -222,11 +239,28 @@ void kernel(unsigned long long *out,
         for (; idx + (ILP_FACTOR - 1) * blockDim.x * STRIDE < num_ints;
              idx += blockDim.x * ILP_FACTOR * STRIDE) {
 #pragma unroll
+#ifdef CALC_LATENCY
+            unsigned long long t0 = clock();
+#endif
             for (int j = 0; j < ILP_FACTOR; j++)
                 local_sum += ws[idx + j * blockDim.x * STRIDE];
+#ifdef CALC_LATENCY
+            unsigned long long t1 = clock();
+            lat_acc += (t1 - t0);
+            lat_cnt++;
+#endif
         }
-        for (; idx < num_ints; idx += blockDim.x * STRIDE)
+        for (; idx < num_ints; idx += blockDim.x * STRIDE){
+#ifdef CALC_LATENCY
+            unsigned long long t0 = clock();
+#endif
             local_sum += ws[idx];
+#ifdef CALC_LATENCY
+            unsigned long long t1 = clock();
+            lat_acc += (t1 - t0);
+            lat_cnt++;
+#endif
+        }
     }
 #endif  // End of traffic-pattern‑specific read loops.
 
@@ -252,10 +286,11 @@ void kernel(unsigned long long *out,
         dest_smid = partner_sdata[0];
     }
 #endif
-    out[3 * gblk_id + 0] = dest_smid;   // Destination SM.
+    out[3 * gblk_id + 0] = dest_smid;     // Destination SM.
     out[3 * gblk_id + 1] = src_smid;      // Source SM.
     out[3 * gblk_id + 2] = totalCycles;   // Timing metric (cycles).
-#else  // CALC_LATENCY branch.
+#endif
+#ifdef CALC_LATENCY  // CALC_LATENCY branch.
     unsigned long long avgLat = lat_cnt ? (lat_acc / lat_cnt) : 0ULL;
     unsigned int src_smid = get_smid();
     unsigned int dest_smid = 0u;
