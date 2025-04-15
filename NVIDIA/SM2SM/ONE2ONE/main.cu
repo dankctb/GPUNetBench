@@ -14,7 +14,7 @@
 #endif
 
 #ifndef ITERATION
-#define ITERATION 100000
+#define ITERATION 10000
 #endif
 
 #ifndef STRIDE
@@ -134,7 +134,7 @@ void kernel(unsigned long long *out,
     // [base+0] = destSM (from warm)
     // [base+1] = srcSM
     out[base + 1] = get_smid();
-    // [base+3 ... base+3+blockDim.x-1] = per-thread avgLat
+    // [base+2 ... base+2+blockDim.x-1] = per-thread avgLat
     out[base + 2 + threadIdx.x] = avgLat;
 #endif
   }

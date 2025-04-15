@@ -2,7 +2,7 @@ NVCC        := nvcc
 NVCC_FLAGS  := -Xptxas -dlcm=cg -O3
 
 SRC         := main.cu
-TARGET      := SMEM
+TARGET      := SM2SM
 
 ARCH_FLAGS := -arch=sm_90
 

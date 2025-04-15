@@ -57,7 +57,7 @@
 #endif
 
 #ifndef ITERATION
-    #define ITERATION 100000   // Default: number of read loop iterations.
+    #define ITERATION 10000   // Default: number of read loop iterations.
 #endif
 
 #ifndef STRIDE
