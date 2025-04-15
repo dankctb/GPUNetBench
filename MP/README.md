@@ -48,8 +48,8 @@ Key features:
 
 ## Compilation
 
-The code is compiled in the executibile file provided. L1 cache is disabled throught '-dlcm=cg' flag to correctly perform only L2 accesses. It will be compiled for CC7.0 (Volta V100)
--DENABLE_ALL_SM flag is used to skip selection of SMs.
+The code is compiled with the provided `Makefile`. L1 cache is disabled throught `-dlcm=cg` flag to correctly perform only L2 accesses. It will be compiled for CC7.0 (Volta V100)
+`-DENABLE_ALL_SM` flag is used to skip selection of SMs.
 
 ## Usage
 
@@ -95,11 +95,4 @@ Each contains metrics:
 Another profiling option is provided if you want to check the transations and requests to L2 cache, in a non aggregated way (Each L2 slice providing the metrics). 
 This option is commented out by default.
 
-## Kernel Configuration Parameters
 
-Defined at compile time via macros in `main.cu`:
-```cpp
-#define ITERATION      10000
-```
-Adjust this value and recompile if needed.
-Do not modify the other macros.

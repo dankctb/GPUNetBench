@@ -2,14 +2,14 @@
 
 ## Overview
 
-This experiment is designed to study the latency and throughput of HBM accesses under varying injection rates and different access patterns. The traffic pattern is such that all SMs access all L2 slices, always obtaining a L2 cache miss. Each data element is read only once to avoid cache reuse and all the Global Memory is allocated. The goal is to characterize the latency distribution as the number of threads per CTA is varied and to assess the impact of adding a random delay before each memory access injection. The random delay is introduced with the hypothesis that it will help “schedule” injections to reduce contention in the interconnect network. The expected outcome is a reduction in both the tail and the average of the latency distribution, leading to increased bandwidth and decreased overall execution time compared to runs without delay.
+This experiment is designed to study the latency and throughput of HBM accesses under varying injection rates and different access patterns. The traffic pattern is such that all SMs access all L2 slices, always obtaining a L2 cache miss. Each data element is read only once to avoid cache reuse and all the Global Memory is allocated. The goal is to characterize the latency distribution and latency-throughput for the NoC under different injection rates and to assess the impact of adding a random delay before each memory access injection. The random delay is introduced with the hypothesis that it will help “schedule” injections to reduce contention in the interconnect network. The expected outcome is a reduction in both the tail and the average of the latency distribution, leading to increased bandwidth and decreased overall execution time compared to runs without delay.
 
 Key features of this experiment:
 - **Injection Rate Variation:** By modifying the number of threads per CTA (from as low as 1 up to 1024), the experiment evaluates how different injection rates affect latency and throughput.
 - **Access Patterns:** The kernel supports three access patterns:
   - **Stream Access** – Each thread computes its access address on every iteration.
   - **Random Access** – Starting addresses are randomly generated for each thread and then updated with a fixed stride.
-- **Random Delay Injection:** Optionally, a random delay can be added before each memory access. This delay (a simple add instruction) can be controlled at compile time and set either per thread or per warp with a selectable number of delay steps.
+- **Random Delay Injection:** Optionally, a random delay can be added before each memory access. This delay (simple add instructions) can be controlled at compile time and can be given either per thread or per warp with a selectable number of delay steps (number of add instructions executed).
 - **Latency Measurement:** When enabled at compile time, the kernel uses `clock()` functions to measure latency. This data is then output, allowing the analysis of both the full latency distribution and the average latency.
 
 ## Prerequisites
@@ -38,7 +38,7 @@ Key features of this experiment:
 
 ## Compilation
 
-Use the provided **Makefile** to compile your experiment. L1 cache is disabled with the `-dlcm=cg` flag to ensure only L2 access or HBM is measured. The Makefile accepts an architecture variable to set the gencode appropriately:
+Use the provided **Makefile** to compile the experiment. L1 cache is disabled with the `-dlcm=cg` flag to ensure only L2 access or HBM is measured. The Makefile accepts an architecture variable to set the gencode appropriately:
 
 ```bash
 # General form:

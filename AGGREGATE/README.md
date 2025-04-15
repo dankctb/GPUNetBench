@@ -7,9 +7,7 @@
 **Key features:**
 - Measures both L2 cache and HBM (global memory) read bandwidth.
 - Adjustable kernel launch configuration using command-line parameters.
-- Uses CUDA’s `__ldcg` intrinsic to force read-only cache loads.
 - Supports customization of CTA (thread blocks per SM) and warps per thread block.
-- Compatible with modern NVIDIA GPUs including V100, A100, and H100.
 - Integrated with three Python plotting scripts:
   - `plot_per_warp.py`: Generates plots on a per-warp basis.
   - `plot_per_cta.py`: Generates plots on a per-CTA (thread block) basis.
@@ -22,7 +20,7 @@
   - `numpy`
   - `matplotlib`
   - `pandas`
-- (Optional) **nvprof** or **ncy** for collecting L2 throughput metrics
+- (Optional) **nvprof** or **ncu** for collecting L2 throughput metrics
 - Compatible NVIDIA GPU (V100, A100, or H100)
 
 ## Folder Structure
@@ -117,7 +115,4 @@ Three Python scripts are provided for visualization:
 - **plot_per_cta.py:** Plots bandwidth measurements on a per-CTA (thread block) basis.
 - **plot_2d_colormap.py:** Creates a 2D colormap that combines both warp and CTA-level data.
 
-To run the scripts, ensure that the following Python libraries are installed:
-```bash
-pip install numpy pandas matplotlib
-```
+

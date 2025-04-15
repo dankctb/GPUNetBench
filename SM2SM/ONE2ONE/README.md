@@ -1,5 +1,7 @@
 # SM2SM Communication One‑to‑One Benchmark
 
+## Overview
+
 This benchmark measures the **bandwidth** and **latency** of SM→SM communication within a GPC on an NVIDIA H100 GPU. It leverages two H100‑specific features:
 
 - **Distributed Shared Memory (DSM)**

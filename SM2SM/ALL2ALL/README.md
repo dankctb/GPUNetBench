@@ -56,11 +56,11 @@ Other configurable parameters include:
 
 ## Compilation
 
-The project uses a simple Makefile controlled by the environment variable `NVCC_DEFS` for compile‑time definitions. The following parameters are set at compile time:
+The project uses a Makefile controlled by the environment variable `NVCC_DEFS` for compile‑time definitions. The following parameters are set at compile time:
 
 - **CLUSTER_SIZE** is fixed at 16.
 - **ILP_FACTOR** determines the unrolling factor (default: 8).
-- **ITERATION** sets the number of loop iterations (default: 100000).
+- **ITERATION** sets the number of loop iterations (default: 10000).
 - **STRIDE** sets the element stride between threads (default: 1).
 
 Measurement mode is selected by specifying one of:

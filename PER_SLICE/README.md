@@ -8,10 +8,8 @@
 - **Direct SM Mode:** Compile with `-DUSE_DIRECT_SM` to target a single SM (specified on the command line) and a single L2 slice.
 
 Key features:
-- Automatically queries device properties (`multiProcessorCount`, `l2CacheSize`) at runtime.
 - Supports V100, A100, and H100 architectures via compile‑time flags (`-DUSE_A100`, `-DUSE_H100`).
 - Reads L2 slice mappings from an external CSV file (`L2_slices_<ARCH>.csv`).
-- Easy configuration via command‑line arguments and Makefile variables.
 - Includes a profiling script (`run.sh`) to automate `nvprof` or `ncu` runs.
 - Includes a parsing script (`parse_logs.sh`) the outputs generated for plotting.
 - Includes a plotting script (`plot.py`) to visualize L2 slice bandwidth distributions.
@@ -48,7 +46,7 @@ Key features:
 
 - **Rows:** Number of L2 slices (V100=32, A100=80, H100=6)  
 - **Columns:** 32 columns  
-- Each row represents the per‑SM indices for that L2 slice.
+- Each row represents the addresses mapped to a L2 slice.
 - A100 slices are sorted in order that every 40 L2 slices, a different L2 partition is accessed. 
 - A100 and H100 have a partitioned L2 cache with two L2 partitions containing 40 L2 slices each.
 - The two L2 partitions are interconnected, but in H100 each SM can access only the local partition.
@@ -202,13 +200,3 @@ chmod +x parse_logs.sh
 ./run.sh
 ```
 
-
-## Kernel Configuration Parameters
-
-Adjust at compile time in `main.cu`:
-
-```cpp
-#define ITERATION     10000
-```
-
-Recompile after modifying. Do not alter other macros.

@@ -43,5 +43,5 @@ for (( i=1; i<=${#GPC_LIST[@]}; i++ )); do
   GPC_IDS=( "${GPC_LIST[@]:0:$i}" )
   echo
   echo ">>> Running with GPC IDs: ${GPC_IDS[*]}"
-  ./BISECTION ${CTAS_PER_SM} "${GPC_IDS[@]}" >> BISECTION.log
+  ./BISECTION ${CTAS_PER_SM} "${GPC_IDS[@]}" >> BISECTION_${PARTITION}.log
 done

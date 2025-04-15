@@ -10,7 +10,7 @@ This benchmark is designed to evaluate the latency and bandwidth of local shared
 The benchmark supports two measurement modes:
 
 - **Latency Measurement (-DCALC_LATENCY):** Uses `clock()` to measure per-access latency and computes an average latency per block.
-- **Bandwidth Measurement (-DCALC_BW):** Uses `clock64()` to measure the total cycles for the entire memory-access loop; bandwidth is then derived by comparing the total bytes moved against the cycle count.
+- **Bandwidth Measurement (-DCALC_BW):** Measure the total cycles for the entire memory-access loop; bandwidth is then derived by comparing the total bytes moved against the cycle count.
 
 This experiment allocate all the SMEM available for a thread block. The SMEM is read ITERATION times.
 

@@ -209,5 +209,5 @@ Below is a figure illustrating a GPC mapping (showing also TPC and CPC hierarchi
 
 The key objective of this experiment is:
 
-- **Contention Analysis:**  
-  Determine whether contention exists between L2 and SM‑to‑SM traffic under various ILP settings and when both traffic types are active simultaneously. We suppose that both traffics need to cross the SM-to-SM network to reach their destination, and interference between the two traffics can happen depending on SM-to-SM network topology.
+- **Interference Analysis:**  
+  Determine whether interference exists between L2 and SM‑to‑SM traffic under various ILP settings and when both traffic types are active simultaneously. In order to correctly check if there is interference, we are syncronizing the launch of the two traffics. Also, we try to make the two traffics to run for around the same amount of time.  We suppose that both traffics need to cross the SM-to-SM network to reach their destination, and interference between the two traffics can happen depending on the SM-to-SM network topology.

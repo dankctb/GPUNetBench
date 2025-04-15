@@ -2,8 +2,8 @@
 
 ## Overview
 
-`BISECTION` is a CUDA benchmark that measures the bisection bandwidth of an L2‑to‑L2 interconnect on NVIDIA A100 and H100 GPUs. It does so by selecting one or more Graphics Processing Clusters (GPCs), mapping their SMs into a contiguous rank space, and issuing global‐memory reads into a single L2 partition. When you target the *remote* partition, the measured bandwidth approximates the L2‑to‑L2 bisection bandwidth. 
-Note that the GPCs in same partition should be checked before running this code, and those GPCs might vary for different GPUs (even of the same architecture).
+`BISECTION` is a benchmark that measures the bisection bandwidth of the L2‑to‑L2 interconnect on NVIDIA A100 and H100 GPUs. It does so by selecting one or more Graphics Processing Clusters (GPCs), mapping their SMs into a contiguous rank space, and issuing global‐memory reads into a single L2 partition. When you target the *remote* partition, the measured bandwidth approximates the L2‑to‑L2 bisection bandwidth. 
+Note that the GPCs in same partition should be checked before running this code, and those GPCs might vary for different GPUs (even for the same architecture).
 
 Key features:
 
@@ -30,21 +30,20 @@ Key features:
 ├── main.cu           # CUDA/C++ source
 ├── Makefile          # Build rules
 ├── run.sh            # Build & run automation script
-├── A100-0.csv        # Address matrix for A100 partition 0 (64×32)
-├── A100-1.csv        # Address matrix for A100 partition 1 (64×32)
-├── H100-0.csv        # Address matrix for H100 partition 0 (164×32)
-├── H100-1.csv        # Address matrix for H100 partition 1 (164×32)
+├── A100-0.csv        # Address matrix for A100 partition 0 (62×32)
+├── A100-1.csv        # Address matrix for A100 partition 1 (62×32)
+├── H100-0.csv        # Address matrix for H100 partition 0 (155×32)
+├── H100-1.csv        # Address matrix for H100 partition 1 (155×32)
 └── README.md         # This file
 ```
 
 ## CSV Matrix Format
 
 - **Rows:**  
-  - A100 → 64 rows  
-  - H100 → 164 rows  
+  - A100 → 62 rows  
+  - H100 → 155 rows  
 - **Columns:** 32  
 - **File names:** `<ARCH>-<PARTITION>.csv` (e.g. `H100-1.csv`)  
-- Each entry is the per‑warp index into the global buffer for that SM.
 
 ## Compilation
 
