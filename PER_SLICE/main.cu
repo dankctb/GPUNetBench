@@ -81,19 +81,19 @@ struct GPCMapping {
     };
 
     #elif defined(USE_H100)
-    // --------------------- H100 MAPPINGS ---------------------
-    // This example uses two GPCs for H100.
-    static const unsigned int h100_gpc0[] = {
-        0,16,32,48,124,126,128,130,  
-        1,17,33,49,125,127,129,131
-    };
-    static const unsigned int h100_gpc1[] = {
-    12,28,44,60,74,88,102,116,   
-    120,13,29,45,61,75,89,103,117,121
-    };
+    // --------------------- H100 PCIe MAPPINGS ---------------------
+    static const unsigned int h100_gpc0[] = {0, 1, 14, 15, 28, 29, 42, 43, 56, 57, 70, 71, 84, 85, 110, 111, 112, 113}; //part 0
+    static const unsigned int h100_gpc1[] = {2, 3, 16, 17, 30, 31, 44, 45, 58, 59, 72, 73, 86, 87, 98, 99}; // part 1
+    static const unsigned int h100_gpc2[] = {4, 5, 18, 19, 32, 33, 46, 47, 60, 61, 74, 75, 88, 89, 100, 101}; // part 0
+    static const unsigned int h100_gpc3[] = {6, 7, 20, 21, 34, 35, 48, 49, 62, 63, 76, 77, 90, 91, 102, 103}; //part 0
+    static const unsigned int h100_gpc4[] = {8, 9, 22, 23, 36, 37, 50, 51, 64, 65, 78, 79, 92, 93, 104, 105}; //part 0
+    static const unsigned int h100_gpc5[] = {10, 11, 24, 25, 38, 39, 52, 53, 66, 67, 80, 81, 94, 95, 106, 107}; //part 1
+    static const unsigned int h100_gpc6[] = {12, 13, 26, 27, 40, 41, 54, 55, 68, 69, 82, 83, 96, 97, 108, 109}; // part 1
 
     static const GPCMapping gpcMappings[] = {
-        {16, h100_gpc0}, {18, h100_gpc1}
+        {18, h100_gpc0}, {16, h100_gpc1}, {16, h100_gpc2},
+        {16, h100_gpc3}, {16, h100_gpc4}, {16, h100_gpc5},
+        {16, h100_gpc6}
     };
 
     #else
@@ -141,7 +141,7 @@ __device__ unsigned int get_smid(void) {
 //------------------------------------------------------------------------------
 #ifdef USE_DIRECT_SM
 
-__global__ void kernel(unsigned int *a0, unsigned int *slice, unsigned int targetSM) {
+__global__ void kernel(unsigned int *d, unsigned int *slice, unsigned int targetSM) {
     volatile unsigned int k = 0;
     unsigned int tid   = threadIdx.x;
     unsigned int warp  = tid / 32;
@@ -152,9 +152,9 @@ __global__ void kernel(unsigned int *a0, unsigned int *slice, unsigned int targe
         for (int i = 0; i < ITERATION; i++) {
             unsigned int idx = warp * 8 + slice[tx] * ADDRESS_BLOCK;
             for (int j = 0; j < 2; j++) {
-                k += a0[idx];
+                k += d[idx];
             }
-            a0[sm_id * ADDRESS_BLOCK] = k;
+            d[sm_id * ADDRESS_BLOCK] = k;
         }
     }
 }

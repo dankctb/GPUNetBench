@@ -87,7 +87,7 @@ __device__ unsigned int get_smid(void) {
 //
 // Performs read or write operations on a global data buffer based on
 // compile-time flag USE_READ.
-__global__ void k(mt *d, int len, int loops_per_sm,
+__global__ void kernel(mt *d, int len, int loops_per_sm,
                   const unsigned int *sm_ids,
                   const unsigned int active_sms,
                   const unsigned int GPCsize) {
@@ -154,24 +154,25 @@ static const GPCMapping gpcMappings[] = {
 };
 
 #elif defined(USE_H100)
-// --------------------- H100 MAPPINGS ---------------------
-// Only two of the seven GPCs available on H100 PCIe
-static const unsigned int h100_gpc0[] = {
-    0,16,32,48,124,126,128,130,  
-    1,17,33,49,125,127,129,131   
-};
-static const unsigned int h100_gpc1[] = {
-   12,28,44,60,74,88,102,116,   
-   120,13,29,45,61,75,89,103,117,121  
-};
+// --------------------- H100 PCIe MAPPINGS ---------------------
+
+static const unsigned int h100_gpc0[] = {0, 1, 14, 15, 28, 29, 42, 43, 56, 57, 70, 71, 84, 85, 110, 111, 112, 113}; //part 0
+static const unsigned int h100_gpc1[] = {2, 3, 16, 17, 30, 31, 44, 45, 58, 59, 72, 73, 86, 87, 98, 99}; // part 1
+static const unsigned int h100_gpc2[] = {4, 5, 18, 19, 32, 33, 46, 47, 60, 61, 74, 75, 88, 89, 100, 101}; // part 0
+static const unsigned int h100_gpc3[] = {6, 7, 20, 21, 34, 35, 48, 49, 62, 63, 76, 77, 90, 91, 102, 103}; //part 0
+static const unsigned int h100_gpc4[] = {8, 9, 22, 23, 36, 37, 50, 51, 64, 65, 78, 79, 92, 93, 104, 105}; //part 0
+static const unsigned int h100_gpc5[] = {10, 11, 24, 25, 38, 39, 52, 53, 66, 67, 80, 81, 94, 95, 106, 107}; //part 1
+static const unsigned int h100_gpc6[] = {12, 13, 26, 27, 40, 41, 54, 55, 68, 69, 82, 83, 96, 97, 108, 109}; // part 1
 
 static const GPCMapping gpcMappings[] = {
-    {16, h100_gpc0}, {18, h100_gpc1}
+    {18, h100_gpc0}, {16, h100_gpc1}, {16, h100_gpc2},
+    {16, h100_gpc3}, {16, h100_gpc4}, {16, h100_gpc5},
+    {16, h100_gpc6}
 };
 
 #elif defined(USE_H100cpc)
 // --------------------- H100cpc MAPPINGS ---------------------
-// Only two of the three CPCs available in GPC0 of H100 PCIe
+// Only two of the three CPCs available in GPC1 of H100 PCIe
 static const unsigned int h100_cpc0[] = {
     2,3,44,45,86,87 
 };
@@ -227,7 +228,7 @@ int main(int argc, char **argv) {
                 return EXIT_FAILURE;
             }
 #elif defined(USE_H100)
-            if (gpc < 0 || gpc > 1) {
+            if (gpc < 0 || gpc > 6) {
                 std::cerr << "Error: For H100, GPC must be 0 or 1.\n";
                 return EXIT_FAILURE;
             }
@@ -291,7 +292,7 @@ int main(int argc, char **argv) {
     cudaMemcpy(d_SM_ids, unifiedSMIDs.data(), sm_array_bytes, cudaMemcpyHostToDevice);
 
     // Allocate data buffer based on L2 size
-    cudaFuncSetAttribute(k, cudaFuncAttributePreferredSharedMemoryCarveout, 100);
+    cudaFuncSetAttribute(kernel, cudaFuncAttributePreferredSharedMemoryCarveout, 100);
     unsigned int l2Bytes = prop.l2CacheSize;
     int elementCount = flp2(l2Bytes) / sizeof(mt);
     mt *d_data = nullptr;
@@ -310,7 +311,7 @@ int main(int argc, char **argv) {
     dim3 gridDim(NUM_SM, CTA);
     for (int iter = 0; iter < ITERATION; iter++) {
         cudaEventRecord(start, 0);
-        k<<<gridDim, threadsPerBlock>>>(d_data,
+        kernel<<<gridDim, threadsPerBlock>>>(d_data,
                                         elementCount,
                                         kernelLoops,
                                         d_SM_ids,

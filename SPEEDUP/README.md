@@ -61,7 +61,7 @@ L1 cache is disabled with the `-dlcm=cg` flag to ensure only L2 access is measur
 ## Usage
 
 ```
-./your_program <CTA> <WARP> <ITERATION> <GPCselectedList> <SMmax>
+./SPEEDUP <CTA> <WARP> <ITERATION> <GPCselectedList> <SMmax>
 ```
 
 | Argument            | Description                                                                                  |
@@ -72,7 +72,7 @@ L1 cache is disabled with the `-dlcm=cg` flag to ensure only L2 access is measur
 | `GPCselectedList`   | Comma‑separated GPC IDs (e.g. `0,1,3`).  Valid range depends on ARCH:                        |
 |                     | • V100: 0–5                                                                                  |
 |                     | • A100: 0–6                                                                                  |
-|                     | • H100: 0–1                                                                                  |
+|                     | • H100: 0–6                                                                                  |
 |                     | • H100CPC: 0–1                                                                               |
 | `SMmax`             | Truncate the unified SM list to this many SM IDs                                             |
 
