@@ -308,6 +308,9 @@ void kernel(unsigned long long *out,
     out[base + 2 + threadIdx.x] = avgLat;
 #endif
 
+    // === FINALIZE ===
+    sdata[threadIdx.x] = local_sum;  // Prevent compiler optimization.
+
     cluster.sync();
 }
 
@@ -463,10 +466,9 @@ int main(int argc, char **argv)
             printf(" | Cycles: %10llu | BW: %.4f GB/s | Exec Time: %.2f us\n",
                    cycles, bw, exec_time_us);
         }
-        double cluster_avg_bw = cluster_bw_sum / CLUSTER_SIZE;
         double cluster_avg_time = cluster_time_sum / CLUSTER_SIZE;
-        printf("Aggregate for Cluster %d: Avg BW: %.4f GB/s, Avg Exec Time: %.2f us\n\n",
-               cluster, cluster_avg_bw, cluster_avg_time);
+        printf("Aggregate for Cluster %d: BW: %.4f GB/s, Avg Exec Time: %.2f us\n\n",
+               cluster, cluster_bw_sum, cluster_avg_time);
     }
 #else  // CALC_LATENCY
     for (int cluster = 0; cluster < numClusters; cluster++) {

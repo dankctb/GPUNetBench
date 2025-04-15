@@ -36,6 +36,9 @@
 #include <string.h>
 #include <cuda_runtime.h>
 #include <cooperative_groups.h>
+#include <vector>
+#include <iostream>
+#include <algorithm>
 
 namespace cg = cooperative_groups;
 
@@ -104,14 +107,15 @@ void kernel(unsigned long long *d_l2,
 {
     cg::cluster_group cluster = cg::this_cluster();
     const int rank   = cluster.block_rank();
-    const int gBid   = blockIdx.x;
+    const int cl_id  = blockIdx.x / CLUSTER_SIZE;
+    const int gblk_id= cl_id * CLUSTER_SIZE + rank;
     const int myRole = role[rank];
 
     //------------------------------------------------------------------------------
     // RECORD SM ID:
     //    Each block stores its SM ID in global memory.
     if (threadIdx.x == 0)
-        d_smid[gBid] = get_smid();
+        d_smid[gblk_id] = get_smid();
 
     //------------------------------------------------------------------------------
     // DYNAMIC SHARED MEMORY:
@@ -219,16 +223,18 @@ void kernel(unsigned long long *d_l2,
             latCnt++;
 #endif
         }
+
+        __syncthreads();
 #ifdef CALC_BW
         unsigned long long tStop = clock64();
-        if (threadIdx.x == 0)
-            d_l2[gBid] = tStop - tStart;
+        d_l2[gblk_id] = tStop - tStart;
 #else
-        int base = gBid * (blockDim.x + 1);
-        if (threadIdx.x == 0)
-            d_l2[base] = get_smid();
+        int base = gblk_id * (blockDim.x + 1);
+        d_l2[base] = get_smid();
         d_l2[base + 1 + threadIdx.x] = latCnt ? latAcc / latCnt : 0ULL;
 #endif
+
+        gmem[threadIdx.x] = acc;
     }
     //------------------------------------------------------------------------------
     // DSM TRAFFIC BRANCH:
@@ -266,17 +272,21 @@ void kernel(unsigned long long *d_l2,
                 }
             }
         }
+        __syncthreads();
 #ifdef CALC_BW
         unsigned long long tStop = clock64();
-        if (threadIdx.x == 0)
-            d_dsm[gBid] = tStop - tStart;
+        d_dsm[gblk_id] = tStop - tStart;
+
 #else
-        int base = gBid * (blockDim.x + 1);
-        if (threadIdx.x == 0)
-            d_dsm[base] = get_smid();
+        int base = gblk_id * (blockDim.x + 1);
+        d_dsm[base] = get_smid();
         d_dsm[base + 1 + threadIdx.x] = latCnt ? latAcc / latCnt : 0ULL;
 #endif
+
+        sdata[threadIdx.x] = acc;
     }
+
+    cluster.sync();
 }
 
 //------------------------------------------------------------------------------
@@ -366,7 +376,7 @@ int main(int argc, char **argv)
     //    Launch the kernel with the computed grid and block dimensions.
     dim3 grid(totalBlocks);
     dim3 blk(blockSize);
-    kernel<<<grid, blk, smemBytes>>>(d_l2, d_dsm, d_smid, d_gmem, gmemInts, d_role, smemInts, d_numdDest);
+    kernel<<<grid, blk, smemBytes>>>(d_l2, d_dsm, d_smid, d_gmem, gmemInts, d_role, smemInts, d_numDest);
     cudaDeviceSynchronize();
 
     //------------------------------------------------------------------------------
@@ -387,7 +397,7 @@ int main(int argc, char **argv)
 #ifdef CALC_BW
     const double bytesPerBlockL2 = (double)smemBytes * ITERATIONS * L2_ITERATIONS;
 #ifdef READ_FULL
-    const double bytesPerBlockDSM = (double)smemBytes * ITERATIONS * numDest;
+    const double bytesPerBlockDSM = (double)smemBytes * ITERATIONS * numDest[0];
 #else
     const double bytesPerBlockDSM = (double)smemBytes * ITERATIONS;
 #endif

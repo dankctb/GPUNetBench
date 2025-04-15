@@ -134,6 +134,8 @@ void kernel(unsigned long long *out,
     out[base + 2 + threadIdx.x] = avgLat;
 #endif
   }
+  // === FINALIZE ===
+  sdata[threadIdx.x] = local_sum;  // Prevent compiler optimization.
 
   cluster.sync();
 }
@@ -172,7 +174,7 @@ int main(int argc, char **argv) {
 #else
   // (blockSize + 2) values per cluster: destSM, srcSM, avgLat per-thread
   out_size = numClusters * (blockSize + 2) * sizeof(unsigned long long);
-#endi
+#endif
 
   // Allocate
   unsigned long long *d_out, *h_out;

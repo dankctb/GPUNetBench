@@ -35,9 +35,13 @@ with open(args.input_log, 'r') as infile:
 avg     = np.mean(all_z)
 std_dev = np.std(all_z)
 
-# ——— Automatic binning ————————————————————————————————————————
-counts, bins = np.histogram(all_z, bins='auto')
-counts = 100 * counts / counts.sum()  # convert to percentages
+# ——— Automatic binning over exact data range —————————————————————————
+counts, bins = np.histogram(
+    all_z,
+    bins='auto',
+    range=(all_z.min(), all_z.max())   # force bins to start/end at data min/max
+)
+counts = 100 * counts / counts.sum()   # convert to percentages
 
 # ——— Plot setup —————————————————————————————————————————————
 fig, ax = plt.subplots(figsize=(4.5/2.54, 4/2.54))
@@ -53,8 +57,8 @@ ax.yaxis.set_major_formatter(FuncFormatter(to_percent))
 ax.set_ylabel('Frequency')
 ax.set_xlabel('Bandwidth (GB/s)')
 
-# Automatically set x-limits to data range
-ax.set_xlim(all_z.min(), all_z.max())
+# Align x‑axis limits with the first and last bin edges
+ax.set_xlim(bins[0]-0.1, bins[-1]+0.1)
 
 # Add stats text
 ax.text(
@@ -64,5 +68,5 @@ ax.text(
     verticalalignment='top'
 )
 
-# Save and close\ nplt.savefig(args.output, bbox_inches='tight', dpi=300)
+plt.savefig(args.output, bbox_inches='tight', dpi=300)
 plt.close(fig)
