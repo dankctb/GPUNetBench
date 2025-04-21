@@ -132,7 +132,7 @@ __global__ void kernel(unsigned int* d_data,
          address = (address + i * 32) % arr_size;
 #elif defined(USE_STREAM_ACCESS)
          // Stream access: compute address based on thread/block indices and iteration.
-         address = (threadIdx.x * 8 + blockIdx.x * blockDim.x * 8 + blockDim.x * i * 8) % arr_size;
+         address = (threadIdx.x * 8 + blockIdx.x * blockDim.x * 8 + blockDim.x * i) % arr_size;
 #elif defined(USE_STRIDED_ACCESS)
          // Strided access: update the pre-computed address.
          address = (address + i * 8) % arr_size;
