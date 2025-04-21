@@ -5,6 +5,16 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from pathlib import Path
 
+# Set the global font to be DejaVu Sans, size 14 (all text will be this size)
+plt.rcParams['font.size'] = 16
+plt.rcParams['font.family'] = 'DejaVu Sans'
+
+# Set the font size of the axes to be 12
+plt.rcParams['axes.labelsize'] = 18
+plt.rcParams['xtick.labelsize'] = 16
+plt.rcParams['ytick.labelsize'] = 16
+
+
 def read_values(filepath):
     """
     Reads a file with one numeric value per line and returns a numpy array.
@@ -89,7 +99,10 @@ def main():
     ax.xaxis.set_major_formatter(ticker.FixedFormatter([str(tick) for tick in ticks]))
 
     ax.grid(which="both", linestyle="--", linewidth=0.5)
-    ax.legend(loc="upper left")
+    legend = ax.legend(unique.values(), unique.keys(), loc='lower center', bbox_to_anchor=(0.5, 1.05), ncol=3)
+    
+    frame = legend.get_frame()
+    frame.set_edgecolor('black')
 
     plt.tight_layout()
     plt.savefig(args.output, dpi=300, bbox_inches="tight")
