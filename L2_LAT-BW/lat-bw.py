@@ -67,7 +67,7 @@ def main():
         return
 
     # Create the plot.
-    fig, ax = plt.subplots(figsize=(8, 4))
+    fig, ax = plt.subplots(figsize=(16/2.56, 10/2.56))
 
     # Compute overall x- and y-limits from all series.
     all_bw = np.concatenate([s["bw"] for s in series_data])
