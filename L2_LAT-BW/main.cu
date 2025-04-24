@@ -30,11 +30,17 @@
 #endif
 #define NUM_POSSIBLE_DELAYS RANDOM_DELAY_STEPS
 
+#ifndef USABLE_BYTES
+  #define USABLE_BYTES (5 * 1024 * 1024)
+#endif
+
+#define ARR_SIZE (USABLE_BYTES / sizeof(unsigned int))
+
 //----------------------------------------------------------------------------
 // Experiment parameters.
 //----------------------------------------------------------------------------
 #define NUM_ITERATIONS 5
-#define ITER_START     4
+#define ITER_START    4
 
 //
 // Device function to get SM ID using inline PTX.
@@ -80,20 +86,23 @@ __device__ unsigned int perform_delay(unsigned int delay, volatile unsigned int 
 //    incremented by a constant stride.
 // Additionally, if ENABLE_RANDOM_DELAY is defined, a delay is inserted.
 // Latency measurement (using clock()) is enabled only when ENABLE_LATENCY_MEASUREMENT is defined.
-__global__ void kernel(unsigned int* d_data,
+__global__ void kernel(
 #ifdef USE_RANDOM_ACCESS
                          unsigned int* d_randAddrs,
 #endif
+#ifdef ENABLE_LATENCY_MEASUREMENT
                          unsigned int* d_latency_out,
-                         unsigned int arr_size) {
+#endif
+                         unsigned int* d_data){
     unsigned int smid = get_smid();
-    unsigned int address = 0;
+    unsigned int address;
 
 #ifdef USE_RANDOM_ACCESS
     // Random access: use global thread id to fetch starting address.
     unsigned int tid = threadIdx.x + blockIdx.x * blockDim.x;
     address = d_randAddrs[tid];
-#elif defined(USE_STRIDED_ACCESS)
+#endif
+#ifdef USE_STRIDED_ACCESS
     // Strided access: compute address based on thread/block indices.
     if (threadIdx.x % 32 < 16)
         address = (threadIdx.x % 32) * 256 + (threadIdx.x / 32) * 8 + blockIdx.x % 8 + smid * 64 * 256;
@@ -108,7 +117,7 @@ __global__ void kernel(unsigned int* d_data,
     extern __shared__ unsigned int shared_latency[];
 #endif
 
-    volatile unsigned int accumulator = 0;
+    unsigned int accumulator = 0;
     volatile unsigned int value = 0;
     volatile unsigned int accumulator3 = 0;
 
@@ -129,13 +138,15 @@ __global__ void kernel(unsigned int* d_data,
 
 #ifdef USE_RANDOM_ACCESS
          // For random access: update the address using a stride (i*32).
-         address = (address + i * 32) % arr_size;
-#elif defined(USE_STREAM_ACCESS)
+         address = (address + i * 32) % ARR_SIZE;
+#endif
+#ifdef USE_STREAM_ACCESS
          // Stream access: compute address based on thread/block indices and iteration.
-         address = (threadIdx.x * 8 + blockIdx.x * blockDim.x * 8 + blockDim.x * i) % arr_size;
-#elif defined(USE_STRIDED_ACCESS)
+         address = (threadIdx.x * 8 + blockIdx.x * blockDim.x * 8 + blockDim.x * i) % ARR_SIZE;
+#endif
+#ifdef USE_STRIDED_ACCESS
          // Strided access: update the pre-computed address.
-         address = (address + i * 8) % arr_size;
+         address = (address + i * 8) % ARR_SIZE;
 #endif
 
 #ifdef ENABLE_RANDOM_DELAY
@@ -145,7 +156,7 @@ __global__ void kernel(unsigned int* d_data,
 #ifdef ENABLE_LATENCY_MEASUREMENT
          start_time = clock();
 #endif
-         accumulator += d_data[address];
+         accumulator += __ldcg(&d_data[address]);
 #ifdef ENABLE_LATENCY_MEASUREMENT
          end_time = clock();
          if (i == ITER_START)
@@ -155,12 +166,14 @@ __global__ void kernel(unsigned int* d_data,
     }
 
     __syncthreads();
+#ifdef ENABLE_RANDOM_DELAY
     value += accumulator3;
+#endif
     // Dummy write to force retention.
     d_data[address] = value;
 
 #ifdef ENABLE_LATENCY_MEASUREMENT
-    d_latency_out[threadIdx.x + blockIdx.x * blockDim.x] = shared_latency[threadIdx.x];
+d_latency_out[threadIdx.x + blockIdx.x * blockDim.x] = shared_latency[threadIdx.x];
 #endif
 }
 
@@ -207,21 +220,15 @@ int main(int argc, char* argv[]) {
         }
     }
     
+    cudaSetDevice(1); // Set device to 1 (assuming a multi-GPU system).
+
     // Query device properties.
     cudaDeviceProp devProp;
-    cudaGetDeviceProperties(&devProp, 0);
+    cudaGetDeviceProperties(&devProp, 1);
     int numSM = devProp.multiProcessorCount;
     
-    // Compute usable data size from L2 cache.
-    unsigned int L2_total_bytes = devProp.l2CacheSize; // in bytes
-    unsigned int reserved_bytes = 1024 * 1024 * sizeof(unsigned int);
-    if (L2_total_bytes <= reserved_bytes) {
-        fprintf(stderr, "Error: L2 cache size (%u bytes) is insufficient for reserved space (%u bytes).\n", 
-                L2_total_bytes, reserved_bytes);
-        exit(EXIT_FAILURE);
-    }
-    unsigned int usable_bytes = L2_total_bytes - reserved_bytes;
-    unsigned int data_size = usable_bytes / sizeof(unsigned int);
+    unsigned int usable_bytes = USABLE_BYTES;
+    unsigned int data_size    = usable_bytes / sizeof(unsigned int);
     
     // Allocate and initialize data array.
     unsigned int* d_data;
@@ -269,11 +276,11 @@ int main(int argc, char* argv[]) {
 #endif
 
     // Build output filename(s).
-#if defined(USE_RANDOM_ACCESS)
+#ifdef USE_RANDOM_ACCESS
     const char* access_pattern = "random";
-#elif defined(USE_STREAM_ACCESS)
+#elif USE_STREAM_ACCESS
     const char* access_pattern = "stream";
-#elif defined(USE_STRIDED_ACCESS)
+#elif USE_STRIDED_ACCESS
     const char* access_pattern = "strided";
 #endif
     char rand_delay_str[64] = "";
@@ -303,15 +310,15 @@ int main(int argc, char* argv[]) {
     size_t sharedMemSize = threads_per_CTA * sizeof(unsigned int);
 #ifdef USE_RANDOM_ACCESS
     #ifdef ENABLE_LATENCY_MEASUREMENT
-         kernel<<<grid, block, sharedMemSize>>>(d_data, d_randAddrs, d_latency_out, data_size);
+         kernel<<<grid, block, sharedMemSize>>>(d_randAddrs, d_latency_out, d_data);
     #else
-         kernel<<<grid, block, sharedMemSize>>>(d_data, d_randAddrs, NULL, data_size);
+         kernel<<<grid, block>>>(d_randAddrs, d_data);
     #endif
 #elif defined(USE_STREAM_ACCESS) || defined(USE_STRIDED_ACCESS)
     #ifdef ENABLE_LATENCY_MEASUREMENT
-         kernel<<<grid, block, sharedMemSize>>>(d_data, d_latency_out, data_size);
+         kernel<<<grid, block, sharedMemSize>>>(d_latency_out, d_data);
     #else
-         kernel<<<grid, block, sharedMemSize>>>(d_data, NULL, data_size);
+         kernel<<<grid, block>>>(d_data);
     #endif
 #endif
     err = cudaGetLastError();
