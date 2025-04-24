@@ -1,11 +1,11 @@
-# GPU Microbenchmarks Overview
+# GPU Microbenchmarks
 
 This repository contains CUDA-based benchmarks designed to evaluate various aspects of GPU memory and interconnection network on NVIDIA GPUs (V100, A100, H100). Each benchmark focuses on distinct architectural components, using as metrics bandwidth, latency and execution time.
 
 ## Repository Structure
 
 ```
-GPU_Benchmarks_Repo
+GPUbench
 ├── AGGREGATE
 ├── BISECTION
 ├── HBM_LAT-BW

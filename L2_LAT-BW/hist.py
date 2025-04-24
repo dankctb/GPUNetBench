@@ -4,6 +4,15 @@ import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 import argparse
 
+# Set the global font to be DejaVu Sans, size 14 (all text will be this size)
+plt.rcParams['font.size'] = 16
+plt.rcParams['font.family'] = 'DejaVu Sans'
+
+# Set the font size of the axes to be 12
+plt.rcParams['axes.labelsize'] = 18
+plt.rcParams['xtick.labelsize'] = 16
+plt.rcParams['ytick.labelsize'] = 16
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate combined histograms from three latency data files."
@@ -67,9 +76,9 @@ def main():
     )
     
     # Draw vertical lines at the mean values.
-    plt.axvline(x=stats1['Mean'], color='blue', linestyle='--', linewidth=1, label=f"Mean ({args.legends[0]})")
-    plt.axvline(x=stats2['Mean'], color='red', linestyle='--', linewidth=1, label=f"Mean ({args.legends[1]})")
-    plt.axvline(x=stats3['Mean'], color='green', linestyle='--', linewidth=1, label=f"Mean ({args.legends[2]})")
+    plt.axvline(x=stats1['Mean'], color='blue', linestyle='--', linewidth=1)
+    plt.axvline(x=stats2['Mean'], color='red', linestyle='--', linewidth=1)
+    plt.axvline(x=stats3['Mean'], color='green', linestyle='--', linewidth=1)
     
     plt.xlabel('Latency (cycles)')
     plt.ylabel('Frequency (%)')
@@ -81,6 +90,11 @@ def main():
     handles, labels = plt.gca().get_legend_handles_labels()
     unique = dict(zip(labels, handles))
     plt.legend(unique.values(), unique.keys(), loc='lower center', bbox_to_anchor=(0.5, 1.05), ncol=3)
+
+    legend = plt.legend(unique.values(), unique.keys(), loc='lower center', bbox_to_anchor=(0.5, 1.05), ncol=3)
+    
+    frame = legend.get_frame()
+    frame.set_edgecolor('black')
     
     # Display computed statistics on the right side.
     stats_text = (
@@ -89,7 +103,7 @@ def main():
         f"{args.legends[2]}:\nMean: {stats3['Mean']:.2f}\nStd: {stats3['Std']:.2f}\nMax: {stats3['Max']:.2f}\nMin: {stats3['Min']:.2f}"
     )
     plt.gca().text(1.02, 0.5, stats_text, transform=plt.gca().transAxes,
-                   fontsize=10, verticalalignment='center',
+                   fontsize=14, verticalalignment='center',
                    bbox=dict(boxstyle='round', facecolor='white', edgecolor='black'))
     
     plt.tight_layout()
