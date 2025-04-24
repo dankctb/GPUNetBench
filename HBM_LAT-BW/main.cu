@@ -219,10 +219,11 @@ int main(int argc, char* argv[]) {
 #ifdef USE_RANDOM_ACCESS
     // For random access, set up random addresses.
     unsigned int totalThreads_random = numSM * CTAs_per_SM * threads_per_CTA;
+    unsigned int iteration_data_size = totalThreads_random * 32;
     unsigned int* h_randAddrs = (unsigned int*)malloc(totalThreads_random * sizeof(unsigned int));
     srand((unsigned int)time(NULL));
     for (unsigned int i = 0; i < totalThreads_random; i++) {
-        unsigned int r = rand() % (data_size / 8);
+        unsigned int r = rand() % (iteration_data_size / 8);
         h_randAddrs[i] = r * 8;
     }
     unsigned int* d_randAddrs;
