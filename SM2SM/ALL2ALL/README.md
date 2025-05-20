@@ -2,7 +2,7 @@
 
 ## Overview
 
-This benchmark measures the **bandwidth** and **latency** of SM→SM communication inside a GPC on an NVIDIA H100 GPU under different traffic patterns and injection rates. It leverages two H100‑specific features:
+This benchmark measures the **bandwidth** and **latency** of SM-to-SM communication inside a GPC on an NVIDIA H100 GPU under different traffic patterns and injection rates. It leverages two H100‑specific features:
 
 - **Distributed Shared Memory (DSM)**
 - **Thread‑Block Clusters** (with a maximum cluster size of 16, guaranteed to reside on one GPC)
