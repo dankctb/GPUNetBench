@@ -6,7 +6,7 @@ This repository contains CUDA-based benchmarks designed to evaluate various aspe
 
 ## Citation
 
-If you use this benchmark suite in your publications or thesis, please cite:
+If you use this benchmark suite in your research, please cite:
 
 1. Zhixian Jin, Christopher Rocca, Jiho Kim, Hans Kasan, Minsoo Rhu, Ali Bakhoda, Tor M. Aamodt, and John Kim. **Uncovering Real GPU NoC Characteristics: Implications on Interconnect Architecture.** In *Proceedings of the 57th IEEE/ACM International Symposium on Microarchitecture (MICRO)*, 885–898, 2024. [https://doi.org/10.1109/MICRO61859.2024.00070](https://doi.org/10.1109/MICRO61859.2024.00070)
 
