@@ -1,13 +1,36 @@
 # GPU Microbenchmarks
 
-This repository contains CUDA-based benchmarks designed to evaluate various aspects of GPU memory and interconnection network on NVIDIA GPUs (V100, A100, H100). Each benchmark focuses on distinct architectural components, using as metrics bandwidth, latency, and execution time.
+This repository contains CUDA-based benchmarks designed to evaluate various aspects of GPU memory and interconnection networks on NVIDIA GPUs (V100, A100, H100). Each benchmark focuses on distinct architectural components, using bandwidth, latency, and execution time as key metrics.
 
-These microbenchmarks were developed and used in:
+---
 
-* **Z.Jin, C.Rocca et al., "Uncovering Real GPU NoC Characteristics: Implications on Interconnect Architecture,"** MICRO 2024 \[[IEEE Reference](https://doi.org/10.1109/MICRO61859.2024.00070)]
-* **C.Rocca and J.Kim, "A Microbenchmark-Based Characterization of On-Chip Networks Architectures in Modern GPUs,"** KAIST Master Thesis, 2025
+## Citation
 
-If you use this benchmark suite in your work, please cite these references (see full citations below).
+If you use this benchmark suite in your publications or thesis, please cite:
+
+1. Zhixian Jin, Christopher Rocca, Jiho Kim, Hans Kasan, Minsoo Rhu, Ali Bakhoda, Tor M. Aamodt, and John Kim. **Uncovering Real GPU NoC Characteristics: Implications on Interconnect Architecture.** In *Proceedings of the 57th IEEE/ACM International Symposium on Microarchitecture (MICRO)*, 885–898, 2024. [https://doi.org/10.1109/MICRO61859.2024.00070](https://doi.org/10.1109/MICRO61859.2024.00070)
+
+2. Christopher Rocca and John Kim. **A Microbenchmark-Based Characterization of On-Chip Networks Architectures in Modern GPUs.** Master’s Thesis, KAIST, 2025.
+
+### BibTeX
+
+```bibtex
+@inproceedings{jin2024uncovering,
+  title     = {Uncovering Real GPU NoC Characteristics: Implications on Interconnect Architecture},
+  author    = {Jin, Zhixian and Rocca, Christopher and Kim, Jiho and Kasan, Hans and Rhu, Minsoo and Bakhoda, Ali and Aamodt, Tor M. and Kim, John},
+  booktitle = {57th IEEE/ACM International Symposium on Microarchitecture (MICRO)},
+  year      = {2024},
+  pages     = {885--898},
+  doi       = {10.1109/MICRO61859.2024.00070}
+}
+
+@mastersthesis{rocca2025microbenchmark,
+  title  = {A Microbenchmark-Based Characterization of On-Chip Networks Architectures in Modern GPUs},
+  author = {Rocca, Christopher and Kim, John},
+  school = {KAIST},
+  year   = {2025}
+}
+```
 
 ---
 
@@ -33,8 +56,6 @@ GPUbench
 
 ## GPUs Specifications
 
-For convenience, we report some useful specifications for the GPUs used in these experiments:
-
 | Feature                  | V100     | A100     | H100 (PCIe) |
 | ------------------------ | -------- | -------- | ----------- |
 | **SMs**                  | 80       | 108      | 114         |
@@ -52,97 +73,33 @@ For convenience, we report some useful specifications for the GPUs used in these
 
 ## Benchmarks Overview
 
-This suite was designed to enable fine-grained characterization of GPU memory and NoC behavior, as presented in \[Jin et al., MICRO 2024] and \[Rocca & Kim, 2025].
+This suite enables fine-grained characterization of GPU memory and on-chip network behavior, as detailed in the cited works.
 
-* **AGGREGATE:**
+* **AGGREGATE**: STREAM-like aggregate read bandwidth tests for L2 cache and HBM, configurable CTAs/SMs and threads/CTA.
+* **HBM\_LAT-BW**: HBM latency and throughput under varied injection rates and patterns, with optional random-delay scheduling.
+* **L2\_LAT-BW**: L2 cache latency and throughput under varied injection rates and patterns, with optional random-delay scheduling.
+* **MP**: Non-coalesced memory accesses across multiple L2 cache slices; configurable GPC sources and L2 partitions.
+* **PER\_SLICE**: Bandwidth uniformity tests targeting single L2 cache slices, across SM/GPC sources, despite zero-load latency nonuniformity.
+* **SM2SM**: SM-to-SM network benchmarks using Distributed Shared Memory (DSM) and Thread-Block Clusters:
 
-  * Measures aggregate read bandwidth from L2 cache and HBM in a STREAM-like fashion. Configurable CTAs per SM and threads per CTA.
-
-* **HBM\_LAT-BW:**
-
-  * Evaluates latency and throughput of HBM accesses under varying injection rates and access patterns. Allows random delay injection to control NoC scheduling.
-
-* **L2\_LAT-BW:**
-
-  * Evaluates latency and throughput of L2 accesses under varying injection rates and access patterns. Also supports random delay injection.
-
-* **MP:**
-
-  * Performs non-coalesced memory accesses targeting multiple L2 slices. Allows selecting GPCs as sources and L2 memory partitions as destinations.
-
-* **PER\_SLICE:**
-
-  * Targets a single L2 slice to evaluate bandwidth uniformity across SM and GPC sources, despite non-uniform zero-load latency.
-
-* **SM2SM:**
-
-  * Benchmarks the SM-to-SM network using Distributed Shared Memory (DSM) and Thread-Block Cluster mechanisms introduced in Hopper:
-
-    * **ALL2ALL:** Bandwidth and latency under different traffic patterns across all SMs in a GPC.
-    * **ONE2ONE:** Bandwidth and latency across each SM pair.
-    * **SM2SM+L2:** Evaluates interference when DSM and L2 traffic share the NoC.
-
-* **SMEM\_LAT-BW:**
-
-  * Local shared memory latency and bandwidth microbenchmarks. Includes streaming and strided (bank-conflict) access patterns.
-
-* **SPEEDUP:**
-
-  * Measures NoC input speedup by selectively activating SMs in GPC, CPC, or TPC hierarchies. Supports read and write operations.
-
-* **BISECTION:**
-
-  * Measures L2-to-L2 interconnection bisection bandwidth by having SMs on one side of the chip access remote L2 partitions.
+  * **ALL2ALL**: Traffic patterns across all SMs within a GPC.
+  * **ONE2ONE**: Pairwise SM bandwidth/latency measurements.
+  * **SM2SM+L2**: Interference analysis between DSM and L2 traffic.
+* **SMEM\_LAT-BW**: Local shared memory latency/bandwidth with streaming and strided (bank-conflict) patterns.
+* **SPEEDUP**: NoC input speedup by selective SM activation at GPC/CPC/TPC levels, for both read and write.
+* **BISECTION**: L2-to-L2 interconnection bisection bandwidth measurements across chip partitions.
 
 ---
 
 ## General Requirements
 
-* **CUDA Toolkit** with `nvcc` compiler
-* Compatible NVIDIA GPUs (V100, A100, H100)
-* Python 3 with:
-
-  * `numpy`
-  * `matplotlib`
-  * `scipy`
-  * `pandas`
-  * `argparse`
-* Bash shell for execution scripts
+* **CUDA Toolkit** with `nvcc`
+* NVIDIA GPUs: V100, A100, or H100
+* Python 3: `numpy`, `matplotlib`, `scipy`, `pandas`, `argparse`
+* Bash shell
 * Make
-* NVIDIA profiling tools (`nvprof`, `ncu`)
+* NVIDIA profiling tools: `nvprof`, `ncu`
 
----
+### Common Settings
 
-## Common Settings
-
-* L1 cache is disabled (`-dlcm=cg`).
-
----
-
-## References
-
-Please cite the following works if you use this benchmark suite:
-
-* **Conference Paper:**
-
-  ```
-  @INPROCEEDINGS{10764573,
-    author    = {Jin, Zhixian and Rocca, Christopher and Kim, Jiho and Kasan, Hans and Rhu, Minsoo and Bakhoda, Ali and Aamodt, Tor M. and Kim, John},
-    title     = {Uncovering Real GPU NoC Characteristics: Implications on Interconnect Architecture},
-    booktitle = {2024 57th IEEE/ACM International Symposium on Microarchitecture (MICRO)},
-    year      = {2024},
-    pages     = {885-898},
-    doi       = {10.1109/MICRO61859.2024.00070}
-  }
-  ```
-
-* **Thesis:**
-
-  ```
-  @mastersthesis{Rocca2025,
-    author  = {Christopher Rocca and John Kim},
-    title   = {A Microbenchmark-Based Characterization of On-Chip Networks Architectures in Modern GPUs},
-    school  = {KAIST},
-    year    = {2025}
-  }
-  ```
+* Disable L1 cache: compile with `-dlcm=cg`.
