@@ -26,7 +26,7 @@ If you use this benchmark suite in your publications or thesis, please cite:
 
 @mastersthesis{rocca2025microbenchmark,
   title  = {A Microbenchmark-Based Characterization of On-Chip Networks Architectures in Modern GPUs},
-  author = {Rocca, Christopher and Kim, John},
+  author = {Rocca, Christopher},
   school = {KAIST},
   year   = {2025}
 }
