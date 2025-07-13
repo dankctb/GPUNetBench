@@ -93,7 +93,8 @@ __global__ void kernel(
 #ifdef ENABLE_LATENCY_MEASUREMENT
                          unsigned int* d_latency_out,
 #endif
-                         unsigned int* d_data){
+                         unsigned int* d_data)
+{
     unsigned int smid = get_smid();
     unsigned int address;
 

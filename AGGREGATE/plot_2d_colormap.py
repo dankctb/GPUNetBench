@@ -8,7 +8,7 @@ import matplotlib.colors as mcolors
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate a 2D colormap of bandwidth vs CTA and warp from a log file"
+        description="Generate a 2D colormap of bandwidth with corresponding {CTA ; warp} from a log file"
     )
     parser.add_argument("input_file",
                         help="Path to the log file (e.g. results_L2.log or results_HBM.log)")
@@ -20,25 +20,25 @@ def main():
     # 1) Read data: blank lines separate 'slices' (y), each number is one 'sm' (x)
     # ----------------------------------------------------------------
     x, y, z = [], [], []
-    slice_idx = 0
-    sm_idx = 0
+    warps_per_cta = 0
+    cta_per_sm = 0
 
     with open(args.input_file, 'r') as f:
         for line in f:
             line = line.strip()
             if not line:
-                slice_idx += 1
-                sm_idx = 0
+                warps_per_cta += 1
+                cta_per_sm = 0
             else:
                 bw = float(line)
-                x.append(sm_idx)
-                y.append(slice_idx)
+                x.append(cta_per_sm)
+                y.append(warps_per_cta)
                 z.append(bw)
-                sm_idx += 1
+                cta_per_sm += 1
 
-    x = np.array(x)
-    y = np.array(y)
-    z = np.array(z)
+    x = np.array(x) # number of CTAs per SM
+    y = np.array(y) # number of warps per CTA
+    z = np.array(z) # bandwidth
 
     # ----------------------------------------------------------------
     # 2) Build a regular grid from min→max of x and y
@@ -62,10 +62,11 @@ def main():
     fig, ax = plt.subplots(figsize=(24/2.54, 16/2.54))
     im = ax.imshow(
         zi,
+        
         origin='lower',
         interpolation='nearest',
         aspect='auto',
-        extent=[xi.min(), xi.max(), yi.min(), yi.max()],
+        extent=(xi.min(), xi.max(), yi.min(), yi.max()),
         cmap='viridis',
         norm=norm
     )

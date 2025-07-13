@@ -4,6 +4,9 @@ set -euo pipefail
 # Build the executable
 make
 
+# Create output directories
+#mkdir -p benchmark_log benchmark_plots
+
 # Common parameters
 ITER=1                    # number of measurement iterations
 L2_LOOPS=1000             # inner loops for L2-cache stress
@@ -15,32 +18,32 @@ CTAS=$(seq 1 32)
 WARPS=$(seq 1 32)
 
 echo "===== L2 Cache Experiments (loopCount=${L2_LOOPS}, sizeMultiple=${SIZE_L2}) ====="
-> results_L2.log
+> benchmark_log/results_L2.log
 for cta in $CTAS; do
   for warp in $WARPS; do
-    ./BW $cta $warp $ITER $L2_LOOPS $SIZE_L2 >> results_L2.log
+    ./BW $cta $warp $ITER $L2_LOOPS $SIZE_L2 >> benchmark_log/results_L2.log
   done
-  echo "" >> results_L2.log
+  echo "" >> benchmark_log/results_L2.log
 done
-echo "L2 results written to results_L2.log"
+echo "L2 results written to benchmark_log/results_L2.log"
 
-python3 plot_2d_colormap.py results_L2.log -o 2d_colormap_L2.png
-python3 plot_per_CTA.py results_L2.log -s L2
-python3 plot_per_warp.py results_L2.log -s L2
+python3 plot_2d_colormap.py benchmark_log/results_L2.log -o benchmark_plots/2d_colormap_L2.png
+#python3 plot_per_CTA.py results_L2.log -s L2
+#python3 plot_per_warp.py results_L2.log -s L2
 
 
 echo
 echo "===== HBM Experiments (loopCount=1, sizeMultiple=${SIZE_HBM}) ====="
-> results_HBM.log
+> benchmark_log/results_HBM.log
 for cta in $CTAS; do
   for warp in $WARPS; do
-    ./BW $cta $warp $ITER 1 $SIZE_HBM >> results_HBM.log
+    ./BW $cta $warp $ITER 1 $SIZE_HBM >> benchmark_log/results_HBM.log
   done
-  echo "" >> results_HBM.log
+  echo "" >> benchmark_log/results_HBM.log
 done
-echo "HBM results written to results_HBM.log"
+echo "HBM results written to benchmark_log/results_HBM.log"
 
 
-python3 plot_2d_colormap.py results_HBM.log -o 2d_colormap_HBM.png
-python3 plot_per_CTA.py results_HBM.log -s HBM
-python3 plot_per_warp.py results_HBM.log -s HBM
+python3 plot_2d_colormap.py benchmark_log/results_HBM.log -o benchmark_plots/2d_colormap_HBM.png
+#python3 plot_per_CTA.py results_HBM.log -s HBM
+#python3 plot_per_warp.py results_HBM.log -s HBM

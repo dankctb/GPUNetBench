@@ -1,9 +1,6 @@
 NVCC        := nvcc
 NVCC_FLAGS  := -Xptxas -dlcm=cg -O3
 
-SRC         := main.cu
-TARGET      := BW
-
 # Default architecture; can be set to v100, a100, or h100.
 ARCH ?= v100
 
@@ -17,11 +14,18 @@ ifeq ($(ARCH),h100)
     ARCH_FLAGS := -arch=sm_90
 endif
 
-.PHONY: all clean
-all: $(TARGET)
+.PHONY: all clean main analysis
+all: BW
 
-$(TARGET): $(SRC)
+# Build original main.cu
+main: BW
+BW: main.cu
+	$(NVCC) $(NVCC_FLAGS) $(ARCH_FLAGS) $(NVCC_DEFS) -o $@ $<
+
+# Build analysis_main.cu
+analysis: analysis_BW
+analysis_BW: analysis_main.cu
 	$(NVCC) $(NVCC_FLAGS) $(ARCH_FLAGS) $(NVCC_DEFS) -o $@ $<
 
 clean:
-	rm -f $(TARGET)
+	rm -f BW analysis_BW

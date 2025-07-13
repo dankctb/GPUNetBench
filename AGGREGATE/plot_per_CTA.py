@@ -7,7 +7,7 @@ from matplotlib.ticker import MaxNLocator
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate per-CTA bar plots of bandwidth vs SM index from a log file"
+        description="Generate per-CTA bar plots of bandwidth vs warp (or SM index ???) from a log file"
     )
     parser.add_argument("input_file",
                         help="Path to the log file (e.g. results_L2.log or results_HBM.log)")
@@ -30,10 +30,10 @@ def main():
     with open(args.input_file, 'r') as f:
         for line in f:
             line = line.strip()
-            if not line:
+            if not line: # blank line detected => new CTA
                 slice_idx += 1
                 sm_idx = 0
-            else:
+            else: # new warp (or SM index ???)
                 bw = float(line)
                 x.append(sm_idx)
                 y.append(slice_idx)

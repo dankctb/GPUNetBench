@@ -5,9 +5,11 @@
 `BW`s is a benchmark program designed to measure both L2 cache and HBM (High-Bandwidth Memory) read aggregate bandwidth on NVIDIA GPUs. It achieves this by issuing coalesced memory accesses to target either L2 cache or HBM, depending on runtime parameters. By setting the data size multiplier to 1 and using a high loop count, the kernel stresses L2 cache accesses; Otherwise, setting the data size multiplier to a high value while using a single loop targets HBM accesses.
 
 **Key features:**
+
 - Measures both L2 cache and HBM (global memory) read bandwidth.
 - Adjustable kernel launch configuration using command-line parameters.
 - Supports customization of CTA (thread blocks per SM) and warps per thread block.
+
 - Integrated with three Python plotting scripts:
   - `plot_per_warp.py`: Generates plots on a per-warp basis.
   - `plot_per_cta.py`: Generates plots on a per-CTA (thread block) basis.
@@ -52,7 +54,7 @@ make ARCH=h100
 ## Usage
 
 ```bash
-./MP <CTA> <WARP> <ITERATION> <loopCount> <sizeMultiple>
+./BW <CTA> <WARP> <ITERATION> <loopCount> <sizeMultiple>
 ```
 
 | Argument       | Description                                                                                                                                                          |
@@ -67,12 +69,12 @@ make ARCH=h100
 
 - **L2 Cache Measurement:** (aggregated L2 access with high loop count)
   ```bash
-  ./MP 1 1 100 1000 1
+  ./BW 1 1 100 1000 1
   ```
 
 - **HBM Measurement:** (global memory access with a high data size and a single loop)
   ```bash
-  ./MP 1 1 100 1 10
+  ./BW 1 1 100 1 10
   ```
 
 ## Automated Benchmark Script (run.sh)
