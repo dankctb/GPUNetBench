@@ -47,7 +47,8 @@ def main():
     yi = np.arange(y.min(), y.max() + 1)
     xi_grid, yi_grid = np.meshgrid(xi, yi)
 
-    zi = griddata((x, y), z, (xi_grid, yi_grid), method='cubic')
+    # zi = griddata((x, y), z, (xi_grid, yi_grid), method='cubic')
+    zi = griddata((x, y), z, (xi_grid, yi_grid), method='linear')
 
     # ----------------------------------------------------------------
     # 3) Auto color‐scale bounds
@@ -60,13 +61,15 @@ def main():
     # 4) Plot
     # ----------------------------------------------------------------
     fig, ax = plt.subplots(figsize=(24/2.54, 16/2.54))
+    # Fix the extent to align with pixel centers
+    # extent = (xi.min() - 0.5, xi.max() + 0.5, yi.min() - 0.5, yi.max() + 0.5)
+    extent=(xi.min(), xi.max()+1, yi.min(), yi.max()+1)
     im = ax.imshow(
         zi,
-        
         origin='lower',
         interpolation='nearest',
         aspect='auto',
-        extent=(xi.min(), xi.max(), yi.min(), yi.max()),
+        extent=extent,
         cmap='viridis',
         norm=norm
     )

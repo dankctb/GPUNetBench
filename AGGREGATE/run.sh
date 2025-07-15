@@ -27,7 +27,7 @@ for cta in $CTAS; do
 done
 echo "L2 results written to benchmark_log/results_L2.log"
 
-python3 plot_2d_colormap.py benchmark_log/results_L2.log -o benchmark_plots/2d_colormap_L2.png
+python3 plot_2d_colormap.py benchmark_log/results_L2.log -o benchmark_plots/fixed_bw_2d_colormap_L2.png
 #python3 plot_per_CTA.py results_L2.log -s L2
 #python3 plot_per_warp.py results_L2.log -s L2
 
@@ -44,6 +44,6 @@ done
 echo "HBM results written to benchmark_log/results_HBM.log"
 
 
-python3 plot_2d_colormap.py benchmark_log/results_HBM.log -o benchmark_plots/2d_colormap_HBM.png
+python3 plot_2d_colormap.py benchmark_log/results_HBM.log -o benchmark_plots/fixed_bw_2d_colormap_HBM.png
 #python3 plot_per_CTA.py results_HBM.log -s HBM
 #python3 plot_per_warp.py results_HBM.log -s HBM

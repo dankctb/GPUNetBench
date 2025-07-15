@@ -38,15 +38,16 @@ __global__ void bandwidthKernel(mt *data, int data_len, int loopCount) {
             for (int i = idx; i < data_len; i += stride) {
                 //int wrapped_idx = i % len;  // Wrap around the index.
                 sum += __ldcg(&data[i]);  // Read using __ldcg intrinsic.
-                value += sum;
+                value += sum; // avoid optimization removal
             }
         }
         else {
             // if number of threads is larger than data_len
-            // Each thread accesses one element with index wrapping
             int access_idx = idx % data_len;
-            sum += __ldcg(&data[access_idx]);  // Read using __ldcg intrinsic.
-            value += sum;
+            for (int i = access_idx; i < data_len; i += stride) {
+                sum += __ldcg(&data[access_idx]);  // Read using __ldcg intrinsic.
+                value += sum;
+            }
         }
     }
     // Write back the sum to global memory to avoid optimization removal 
@@ -123,7 +124,13 @@ int main(int argc, char** argv) {
         // Calculate effective bandwidth in GB/s.
         // Total bytes read = numElements * sizeof(mt) * loopCount.
         // Divide by (milliseconds * 1e6) to convert time and bytes into GB/s.
-        float bandwidth = ((numElements) * sizeof(mt) * loopCount) / (milliseconds * 1e6f);
+        float bandwidth;
+        if (threadsPerBlock*blocks < numElements) {
+            bandwidth = ((numElements) * sizeof(mt) * loopCount) / (milliseconds * 1e6f);
+        }
+        else {
+            bandwidth = ((threadsPerBlock*blocks) * sizeof(mt) * loopCount) / (milliseconds * 1e6f);
+        }
         bandwidthMeasurements[iter] = bandwidth;
     }
 
