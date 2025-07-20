@@ -79,7 +79,7 @@ make ARCH=h100
 
 ## Automated Benchmark Script (run.sh)
 
-The `run.sh` script automates a comprehensive sweep of CTA and warp configurations for both L2 cache and HBM experiments. It builds the `MP` executable and executes two phases:
+The `run.sh` script automates a comprehensive sweep of CTA and warp configurations for both L2 cache and HBM experiments. It builds the `BW` executable and executes two phases:
 
 1. **L2 Cache Phase**
    - Uses a high inner loop count (`loopCount=L2_LOOPS`, default 1000) and `sizeMultiple=1` to stress L2 cache.

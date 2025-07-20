@@ -26,33 +26,26 @@ float mean(float arr[], int size) {
 
 using mt = unsigned long long;
 
-__global__ void bandwidthKernel(mt *data, int data_len, int loopCount) {
+__global__ void bandwidthKernel(mt *data, int data_len, int L2_access_len, int loopCount) {
     volatile int sum = 0;
     volatile int value = 0;
     int idx = threadIdx.x + blockDim.x * blockIdx.x;
-    int stride = gridDim.x * blockDim.x;
+    int stride = gridDim.x * blockDim.x; // total number of threads in the grid
 
     // Loop over the number of iterations to measure bandwidth.
     for (int l = 0; l < loopCount; l++) {
-        if (stride < data_len) {
-            for (int i = idx; i < data_len; i += stride) {
-                //int wrapped_idx = i % len;  // Wrap around the index.
-                sum += __ldcg(&data[i]);  // Read using __ldcg intrinsic.
-                value += sum; // avoid optimization removal
+        for (int i = idx; i < L2_access_len; i += stride) {
+            int access_idx = i;
+            if (i >= data_len){
+                access_idx = i % data_len;
             }
-        }
-        else {
-            // if number of threads is larger than data_len
-            int access_idx = idx % data_len;
-            for (int i = access_idx; i < data_len; i += stride) {
-                sum += __ldcg(&data[access_idx]);  // Read using __ldcg intrinsic.
-                value += sum;
-            }
+            sum += __ldcg(&data[access_idx]);  // Read using __ldcg intrinsic.
+            value += sum;
         }
     }
-    // Write back the sum to global memory to avoid optimization removal 
-    int access_idx = idx % data_len;
-    data[access_idx] = value;
+    
+    // Write back the sum to global memory to avoid optimization removal.
+    data[idx % data_len] = value;
 }
 
 int main(int argc, char** argv) {
@@ -63,8 +56,8 @@ int main(int argc, char** argv) {
     }
     
     // Parse command-line parameters.
-    int CTA         = std::atoi(argv[1]);  // Number of thread blocks per SM.
-    int WARP        = std::atoi(argv[2]);  // Number of warps per thread block.
+    int CTA         = std::atoi(argv[1]);  // Number of thread blocks per SM. 1-32
+    int WARP        = std::atoi(argv[2]);  // Number of warps per thread block. 1-32
     int ITERATION   = std::atoi(argv[3]);  // Number of iterations for measurement.
     int loopCount   = std::atoi(argv[4]);  // Number of loops executed inside the kernel.
     int sizeMultiple = std::atoi(argv[5]); // Multiplier for L2 cache size to set data transfer size.
@@ -87,7 +80,10 @@ int main(int argc, char** argv) {
     unsigned long long totalBytes = flp2(targetSize);
     // Determine number of elements for type mt.
     unsigned long long numElements = totalBytes / sizeof(mt);
-
+    // Determine number of L2 accesses that all threads have work to do
+    // max number of threads per SM is num_SM * max_CTA_per_SM * max_WARP_per_CTA * 32
+    // number of L2 accesses is 80 * 32 * 32 * 32 *2, larger than the number of SMs in all GPUs v100, a100, h100
+    unsigned long long numL2Access = 80 * 32 * 32 * 32 *2;
     // Configure kernel launch parameters:
     //   - Each block has (32 * WARP) threads.
     //   - Total number of blocks is (numSM * CTA).
@@ -111,7 +107,12 @@ int main(int argc, char** argv) {
     for (int iter = 0; iter < ITERATION; iter++) {
 
         (cudaEventRecord(start));
-        bandwidthKernel<<<blocks, threadsPerBlock>>>(d_data, numElements, loopCount);
+        bandwidthKernel<<<blocks, threadsPerBlock>>>(d_data, numElements, numL2Access, loopCount);
+        cudaError_t kernelError = cudaGetLastError();
+        if (kernelError != cudaSuccess) {
+            std::cerr << "Kernel launch failed: " << cudaGetErrorString(kernelError) << std::endl;
+            return EXIT_FAILURE;
+        }
         (cudaEventRecord(stop));
 
         // Ensure the kernel has completed.
@@ -124,13 +125,7 @@ int main(int argc, char** argv) {
         // Calculate effective bandwidth in GB/s.
         // Total bytes read = numElements * sizeof(mt) * loopCount.
         // Divide by (milliseconds * 1e6) to convert time and bytes into GB/s.
-        float bandwidth;
-        if (threadsPerBlock*blocks < numElements) {
-            bandwidth = ((numElements) * sizeof(mt) * loopCount) / (milliseconds * 1e6f);
-        }
-        else {
-            bandwidth = ((threadsPerBlock*blocks) * sizeof(mt) * loopCount) / (milliseconds * 1e6f);
-        }
+        float bandwidth = ((numL2Access) * sizeof(mt) * loopCount) / (milliseconds * 1e6f);
         bandwidthMeasurements[iter] = bandwidth;
     }
 

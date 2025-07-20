@@ -14,7 +14,7 @@ ifeq ($(ARCH),h100)
     ARCH_FLAGS := -arch=sm_90
 endif
 
-.PHONY: all clean main analysis
+.PHONY: all clean main all_arch
 all: BW
 
 # Build original main.cu
@@ -22,9 +22,9 @@ main: BW
 BW: main.cu
 	$(NVCC) $(NVCC_FLAGS) $(ARCH_FLAGS) $(NVCC_DEFS) -o $@ $<
 
-# Build analysis_main.cu
-analysis: analysis_BW
-analysis_BW: analysis_main.cu
+# Build all_arch_main.cu
+all_arch: all_arch_BW
+all_arch_BW: all_arch_main.cu
 	$(NVCC) $(NVCC_FLAGS) $(ARCH_FLAGS) $(NVCC_DEFS) -o $@ $<
 
 clean:
