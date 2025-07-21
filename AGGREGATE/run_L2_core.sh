@@ -21,10 +21,10 @@ mkdir -p benchmark_log benchmark_plots
 
 # Common parameters
 ITER=1                    # number of measurement iterations
-L2_LOOPS=100             # inner loops for L2-cache stress
+L2_LOOPS=1000             # inner loops for L2-cache stress
 SIZE_L2=1                 # sizeMultiple=1 for L2
-LOG_FILE="benchmark_log/${GPU_ARCH}_results_L2.log"  # output log file path
-PLOT_FILE="benchmark_plots/${GPU_ARCH}_2maxthread_2d_colormap_L2.png"
+LOG_FILE="benchmark_log/${GPU_ARCH}_${L2_LOOPS}loop_results_L2.log"  # output log file path
+PLOT_FILE="benchmark_plots/${GPU_ARCH}_${L2_LOOPS}loop_2d_colormap_L2.png"
 
 # Range of CTAs and WARPs to sweep
 CTAS=$(seq 1 32)

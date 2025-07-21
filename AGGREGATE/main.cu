@@ -83,8 +83,8 @@ int main(int argc, char** argv) {
     unsigned long long numElements = totalBytes / sizeof(mt);
     // Determine number of L2 accesses that all threads have work to do
     // max number of threads per SM is num_SM * max_CTA_per_SM * max_WARP_per_CTA * 32
-    // number of L2 accesses is 80 * 32 * 32 * 32 *2, larger than the number of SMs in all GPUs v100, a100, h100
-    unsigned long long numL2Access = 80 * 32 * 32 * 32 *2;
+    // number of L2 accesses is 80 * 32 * 32 * 32, larger than the number of SMs in all GPUs v100, a100, h100
+    unsigned long long numL2Access = 80 * 32 * 32 * 32;
     // Configure kernel launch parameters:
     //   - Each block has (32 * WARP) threads.
     //   - Total number of blocks is (numSM * CTA).
