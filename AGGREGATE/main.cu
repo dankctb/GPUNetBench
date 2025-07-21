@@ -33,6 +33,7 @@ __global__ void bandwidthKernel(mt *data, int data_len, int L2_access_len, int l
     int stride = gridDim.x * blockDim.x; // total number of threads in the grid
 
     // Loop over the number of iterations to measure bandwidth.
+    // 2nd, 3rd, … access of the same line come from L2, but the very 1st access from HBM.
     for (int l = 0; l < loopCount; l++) {
         for (int i = idx; i < L2_access_len; i += stride) {
             int access_idx = i;

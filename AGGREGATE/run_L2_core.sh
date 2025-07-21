@@ -3,12 +3,14 @@ set -euo pipefail
 
 # Usage: ./run_L2_core.sh [GPU_ARCH]
 # Get GPU architecture from command line argument (default: a100)
-GPU_ARCH=${1:-a100}
 if [ "$#" -lt 1 ]; then
     echo "Usage: $0 <v100|a100|h100>"
     echo "Please specify the GPU architecture"
     exit 1
 fi
+
+GPU_ARCH=$1
+
 echo "Using GPU architecture: $GPU_ARCH"
 
 # Build the executable with parameters: ARCH=v100, a100, h100
@@ -19,7 +21,7 @@ mkdir -p benchmark_log benchmark_plots
 
 # Common parameters
 ITER=1                    # number of measurement iterations
-L2_LOOPS=1000             # inner loops for L2-cache stress
+L2_LOOPS=100             # inner loops for L2-cache stress
 SIZE_L2=1                 # sizeMultiple=1 for L2
 LOG_FILE="benchmark_log/${GPU_ARCH}_results_L2.log"  # output log file path
 PLOT_FILE="benchmark_plots/${GPU_ARCH}_2maxthread_2d_colormap_L2.png"
@@ -33,8 +35,6 @@ echo "===== L2 Cache Experiments (loopCount=${L2_LOOPS}, sizeMultiple=${SIZE_L2}
 for cta in $CTAS; do
   for warp in $WARPS; do
     echo "L2 experiment: CTA: $cta, WARP: $warp"
-    ./BW $cta $warp $ITER $L2_LOOPS $SIZE_L2 
-    ./BW $cta $warp $ITER $L2_LOOPS $SIZE_L2 
     ./BW $cta $warp $ITER $L2_LOOPS $SIZE_L2 >> "$LOG_FILE"
   done
   echo "" >> "$LOG_FILE"
