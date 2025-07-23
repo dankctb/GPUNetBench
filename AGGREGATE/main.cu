@@ -32,7 +32,7 @@ __global__ void bandwidthKernel(mt *data, int data_len, int L2_access_len, int l
     int idx = threadIdx.x + blockDim.x * blockIdx.x;
     int stride = gridDim.x * blockDim.x; // total number of threads in the grid
 
-    // Loop over the number of iterations to measure bandwidth.
+    // Loop over the number of loopCount to measure bandwidth.
     // 2nd, 3rd, … access of the same line come from L2, but the very 1st access from HBM.
     for (int l = 0; l < loopCount; l++) {
         for (int i = idx; i < L2_access_len; i += stride) {
@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     int ITERATION   = std::atoi(argv[3]);  // Number of iterations for measurement.
     int loopCount   = std::atoi(argv[4]);  // Number of loops executed inside the kernel.
     int sizeMultiple = std::atoi(argv[5]); // Multiplier for L2 cache size to set data transfer size.
-
+    int numL2Access = std::atoi(argv[6]); // Number of L2 accesses.
     // Set up CUDA device.
     (cudaSetDevice(0));
     cudaDeviceProp prop;
@@ -81,10 +81,7 @@ int main(int argc, char** argv) {
     unsigned long long totalBytes = flp2(targetSize);
     // Determine number of elements for type mt.
     unsigned long long numElements = totalBytes / sizeof(mt);
-    // Determine number of L2 accesses that all threads have work to do
-    // max number of threads per SM is num_SM * max_CTA_per_SM * max_WARP_per_CTA * 32
-    // number of L2 accesses is 80 * 32 * 32 * 32, larger than the number of SMs in all GPUs v100, a100, h100
-    unsigned long long numL2Access = 80 * 32 * 32 * 32;
+    
     // Configure kernel launch parameters:
     //   - Each block has (32 * WARP) threads.
     //   - Total number of blocks is (numSM * CTA).

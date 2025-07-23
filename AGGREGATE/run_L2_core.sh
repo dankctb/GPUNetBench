@@ -23,8 +23,9 @@ mkdir -p benchmark_log benchmark_plots
 ITER=1                    # number of measurement iterations
 L2_LOOPS=1000             # inner loops for L2-cache stress
 SIZE_L2=1                 # sizeMultiple=1 for L2
-LOG_FILE="benchmark_log/${GPU_ARCH}_${L2_LOOPS}loop_results_L2.log"  # output log file path
-PLOT_FILE="benchmark_plots/${GPU_ARCH}_${L2_LOOPS}loop_2d_colormap_L2.png"
+NUM_L2_ACCESS=$((80*32*32*32))   # number of L2 accesses (80 * 32^3 = 2621440)
+LOG_FILE="benchmark_log/${GPU_ARCH}_${NUM_L2_ACCESS}Access_${L2_LOOPS}loop_results_L2.log"  # output log file path
+PLOT_FILE="benchmark_plots/${GPU_ARCH}_${NUM_L2_ACCESS}Access_${L2_LOOPS}loop_2d_colormap_L2.png"
 
 # Range of CTAs and WARPs to sweep
 CTAS=$(seq 1 32)
@@ -35,7 +36,7 @@ echo "===== L2 Cache Experiments (loopCount=${L2_LOOPS}, sizeMultiple=${SIZE_L2}
 for cta in $CTAS; do
   for warp in $WARPS; do
     echo "L2 experiment: CTA: $cta, WARP: $warp"
-    ./BW $cta $warp $ITER $L2_LOOPS $SIZE_L2 >> "$LOG_FILE"
+    ./BW $cta $warp $ITER $L2_LOOPS $SIZE_L2 $NUM_L2_ACCESS >> "$LOG_FILE"
   done
   echo "" >> "$LOG_FILE"
 done
