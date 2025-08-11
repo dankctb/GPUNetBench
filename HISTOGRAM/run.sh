@@ -2,7 +2,6 @@
 
 set -e
 
-echo "=== GPU Histogram Benchmark ==="
 echo "Building histogram programs..."
 
 # Clean previous builds
@@ -23,25 +22,11 @@ elif [[ "$GPU_INFO" == *"H100"* ]]; then
     make histogram_h100
     
     echo "Running H100 histogram benchmarks with different cluster sizes..."
-    
-    echo "--- Cluster Size 2 ---"
-    ./histogram_h100 h100_c2
-    
-    echo "--- Cluster Size 4 ---"
-    ./histogram_h100 h100_c4
-    
-    echo "--- Cluster Size 8 ---"
-    ./histogram_h100 h100_c8
+
+    ./histogram_h100 
     
 else
-    echo "Building both versions for manual testing..."
-    make all
-    
-    echo "Available executables:"
-    echo "  ./histogram_v100 v100"
-    echo "  ./histogram_h100 h100_c2"
-    echo "  ./histogram_h100 h100_c4"
-    echo "  ./histogram_h100 h100_c8"
+    echo "No GPU Architecture detected"
 fi
 
 echo "Benchmark complete!" 
