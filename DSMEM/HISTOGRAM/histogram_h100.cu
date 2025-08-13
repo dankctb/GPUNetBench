@@ -19,7 +19,7 @@ __global__ void clusterHist_kernel(int *bins, const int nbins, const int bins_pe
   unsigned int clusterBlockRank = cluster.block_rank(); // Rank of the current block in the cluster
   int cluster_size = cluster.dim_blocks().x; // Number of blocks in the cluster dimension x
 
-  //Initialize shared memory histogram to zeros
+  //Initialize shared memory histogram to zeros for each block
   for (int i = threadIdx.x; i < bins_per_block; i += blockDim.x)
   {
     smem[i] = 0; 
@@ -67,12 +67,13 @@ __global__ void clusterHist_kernel(int *bins, const int nbins, const int bins_pe
 }
 
 // Non-DSM histogram kernel
+// note that code it myslef, not from any source or reference
 __global__ void histogram_kernel(int *bins, const int nbins, const int *__restrict__ input, size_t array_size)
 {
     extern __shared__ int smem[];
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     
-    // Initialize shared memory
+    // Initialize shared memory for each block
     for (int i = threadIdx.x; i < nbins; i += blockDim.x) {
         smem[i] = 0;
     }
@@ -85,6 +86,7 @@ __global__ void histogram_kernel(int *bins, const int nbins, const int *__restri
         atomicAdd(&smem[binid], 1);
     }
     __syncthreads();
+
     
     // Write to global memory
     for (int i = threadIdx.x; i < nbins; i += blockDim.x) {
@@ -114,10 +116,7 @@ int main(int argc, char* argv[]) {
     int device = 0;
     cudaGetDevice(&device);
     cudaDeviceProp prop{};
-    cudaGetDeviceProperties(&prop, device);
-    std::cout << "Shared memory per SM (KB): " << prop.sharedMemPerMultiprocessor / 1024 << std::endl;
-    std::cout << "Bin size(KB): " << bin_size * sizeof(int) / 1024 << std::endl;
-    
+    cudaGetDeviceProperties(&prop, device);    
     // Generate test data
     std::vector<int> h_data(DATA_SIZE);
     generate_data(h_data, bin_size);
@@ -134,8 +133,9 @@ int main(int argc, char* argv[]) {
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
-    if (cluster_size == 1) {
+    if (cluster_size == 0) {
         // Non-DSM case
+        // forget it ... :) 
         int threads_per_block = 1024;
         int total_blocks = std::min(32, (DATA_SIZE + threads_per_block - 1) / threads_per_block);
         size_t smem_size = bin_size * sizeof(int);
@@ -144,16 +144,21 @@ int main(int argc, char* argv[]) {
         cudaEventRecord(start);
         histogram_kernel<<<total_blocks, threads_per_block, smem_size>>>(d_histogram, bin_size, d_data, array_size);
     } else {
-        // DSM usage
+        // DSM usage - use multiple clusters to utilize all SMs
         int threads_per_block = 1024;
         int bins_per_block = (bin_size + cluster_size - 1) / cluster_size;
         size_t smem_size = bins_per_block * sizeof(int);
+        
+        // Calculate number of clusters to utilize all 132 SMs on H100
+        int num_clusters = (132 + cluster_size - 1) / cluster_size;  // Round up division
+        
         std::cout << "Bins per block: " << bins_per_block << std::endl;
-        std::cout << "SMEM size: " << smem_size / 1024 << " KB" << std::endl;
+        std::cout << "SMEM size allocated per block: " << smem_size / 1024 << " KB" << std::endl;
+        std::cout << "Number of clusters: " << num_clusters << std::endl;
         size_t array_size = DATA_SIZE;
         
         cudaLaunchConfig_t config = {0};
-        config.gridDim = dim3(cluster_size, 1, 1);
+        config.gridDim = dim3(cluster_size * num_clusters, 1, 1);  // Total blocks = cluster_size * num_clusters
         config.blockDim = dim3(threads_per_block, 1, 1);
         config.dynamicSmemBytes = smem_size;
         
@@ -169,8 +174,7 @@ int main(int argc, char* argv[]) {
         cudaFuncSetAttribute(clusterHist_kernel, cudaFuncAttributeRequiredClusterDepth, 1);
         // Launch kernel based on cluster size
         cudaEventRecord(start);
-        clusterHist_kernel<<<config.gridDim, config.blockDim, config.dynamicSmemBytes>>>(d_histogram, bin_size, bins_per_block, d_data, array_size);
-
+        clusterHist_kernel<<<config.gridDim, config.blockDim, config.dynamicSmemBytes>>>(d_histogram, bin_size, bins_per_block, d_data, array_size); 
     }
     
     cudaEventRecord(stop);

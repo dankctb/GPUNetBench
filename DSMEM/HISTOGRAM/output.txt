@@ -1,0 +1,146 @@
+# format : bin_size cluster_size kernel_execution_time
+# Testing bin_size: 16384 (64 KB)
+
+16384 1 0.272032
+
+Bins per block: 8192
+SMEM size: 32 KB
+16384 2 0.538016
+
+Bin size(KB): 64
+Bins per block: 4096
+SMEM size: 16 KB
+16384 4 0.606336
+
+Bin size(KB): 64
+Bins per block: 2048
+SMEM size: 8 KB
+16384 8 0.656416
+
+Bin size(KB): 64
+Bins per block: 1024
+SMEM size: 4 KB
+16384 16 0.005376
+
+# Testing bin_size: 32768 (128 KB)
+
+Bin size(KB): 128
+32768 1 0.248032
+
+Bin size(KB): 128
+Bins per block: 16384
+SMEM size: 64 KB
+32768 2 0.005216
+
+Bin size(KB): 128
+Bins per block: 8192
+SMEM size: 32 KB
+32768 4 0.607872
+
+Bin size(KB): 128
+Bins per block: 4096
+SMEM size: 16 KB
+32768 8 0.654336
+
+Bin size(KB): 128
+Bins per block: 2048
+SMEM size: 8 KB
+32768 16 0.005056
+
+# Testing bin_size: 65536 (256 KB)
+
+Bin size(KB): 256
+65536 1 0.247488
+
+Bin size(KB): 256
+Bins per block: 32768
+SMEM size: 128 KB
+65536 2 0.006112
+
+Bin size(KB): 256
+Bins per block: 16384
+SMEM size: 64 KB
+65536 4 0.00496
+
+Bin size(KB): 256
+Bins per block: 8192
+SMEM size: 32 KB
+65536 8 0.655296
+
+Bin size(KB): 256
+Bins per block: 4096
+SMEM size: 16 KB
+65536 16 0.005216
+
+# Testing bin_size: 131072 (512 KB) => 2 block to hold bins data
+
+No DSM used
+131072 1 0.246208
+
+Bins per block: 65536
+SMEM size: 256 KB
+131072 2 0.005248
+
+Bins per block: 32768
+SMEM size: 128 KB
+131072 4 0.00544
+
+Bins per block: 16384
+SMEM size: 64 KB
+131072 8 0.005824
+
+Bins per block: 8192
+SMEM size: 32 KB
+131072 16 0.006272
+
+# Testing bin_size: 262144 (1024 KB)
+
+Bin size(KB): 1024
+262144 1 0.297536
+
+Bin size(KB): 1024
+Bins per block: 131072
+SMEM size: 512 KB
+262144 2 0.005248
+
+Bin size(KB): 1024
+Bins per block: 65536
+SMEM size: 256 KB
+262144 4 0.006304
+
+Bin size(KB): 1024
+Bins per block: 32768
+SMEM size: 128 KB
+262144 8 0.00528
+
+Bin size(KB): 1024
+Bins per block: 16384
+SMEM size: 64 KB
+262144 16 0.00512
+
+# Testing bin_size: 524288 (2048 KB)
+
+Bin size(KB): 2048
+524288 1 0.264224
+
+Bin size(KB): 2048
+Bins per block: 262144
+SMEM size: 1024 KB
+524288 2 0.005344
+
+Bin size(KB): 2048
+Bins per block: 131072
+SMEM size: 512 KB
+524288 4 0.00544
+
+Bin size(KB): 2048
+Bins per block: 65536
+SMEM size: 256 KB
+524288 8 0.005632
+
+Bin size(KB): 2048
+Bins per block: 32768
+SMEM size: 128 KB
+524288 16 0.005312
+
+Benchmark complete!

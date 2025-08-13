@@ -5,16 +5,25 @@ CUDA_ARCH_H100 = -arch=sm_90 -rdc=true -Xptxas -dlcm=cg -DCOMPILE_H100
 
 TARGET_V100 = histogram_v100
 TARGET_H100 = histogram_h100
+TARGET_H100_256 = histogram256_optimize_host
+TARGET_H100_256_OPT_DSMEM = histogram256_optimize_dsmem
 
-all: $(TARGET_H100)
-
-$(TARGET_V100): histogram_v100.cu
+all: $(TARGET_H100) $(TARGET_H100_256) $(TARGET_H100_256_OPT_DSMEM)
+ 
+ $(TARGET_V100): histogram_v100.cu
 	$(NVCC) $(CXXFLAGS) $(CUDA_ARCH_V100) -o $@ $^
+ 
+ $(TARGET_H100): histogram_h100.cu
+	$(NVCC) $(CXXFLAGS) $(CUDA_ARCH_H100) -o $@ $^
+ 
+ $(TARGET_H100_256): histogram256_optimize_host.cu
+	$(NVCC) $(CXXFLAGS) $(CUDA_ARCH_H100) -o $@ $^
+ 
 
-$(TARGET_H100): histogram_h100.cu
+$(TARGET_H100_256_OPT_DSMEM): histogram256_optimize_dsmem.cu
 	$(NVCC) $(CXXFLAGS) $(CUDA_ARCH_H100) -o $@ $^
 
 clean:
-	rm -f $(TARGET_V100) $(TARGET_H100) *.o
-
-.PHONY: all clean test_h100 
+	rm -f $(TARGET_V100) $(TARGET_H100) $(TARGET_H100_256) $(TARGET_H100_256_OPT_DSMEM) *.o
+ 
+ .PHONY: all clean test_h100 
