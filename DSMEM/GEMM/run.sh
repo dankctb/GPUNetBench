@@ -7,20 +7,23 @@ echo "Building matmul programs..."
 make clean
 make all
 
-# Vary matrix sizes; fixed cluster=8 and block=16 sizes are in code
+# Vary matrix sizes and cluster sizes
 sizes=(512 1024 2048 4096 8192 16384)
+cluster_sizes=(2 4 8)
 
 OUT_CSV="results_matmul_comparison.csv"
-echo "N,regular_ms,dsmem_ms" > "$OUT_CSV"
+echo "N,cluster_size,regular_ms,dsmem_ms" > "$OUT_CSV"
 
 nvidia-smi -pm 1 # Enable persistent mode
 nvidia-smi -ac 1410,1830
 
 for N in "${sizes[@]}"; do
-  echo -n "$N,"
-  ./matmul "$N" | cut -d',' -f2 | tr -d '\n'
-  echo -n ","
-  ./matmul_h100 "$N" | cut -d',' -f2
+  for C in "${cluster_sizes[@]}"; do
+    echo -n "$N,$C,"
+    ./matmul "$N" | cut -d',' -f2 | tr -d '\n'
+    echo -n ","
+    ./matmul_h100 "$N" "$C" | cut -d',' -f2
+  done
 done >> "$OUT_CSV"
 
 echo "Wrote $OUT_CSV"
@@ -32,26 +35,30 @@ try:
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
+    import numpy as np
 except Exception as e:
     print('Skipping plot (matplotlib not available):', e)
     raise SystemExit(0)
-Ns, reg, dsm = [], [], []
+data = {}
 with open(os.environ['CSV_PATH']) as f:
     r = csv.DictReader(f)
     for row in r:
-        Ns.append(int(row['N']))
-        reg.append(float(row['regular_ms']))
-        dsm.append(float(row['dsmem_ms']))
-import numpy as np
+        n = int(row['N'])
+        c = int(row['cluster_size'])
+        if n not in data: data[n] = {}
+        data[n][c] = {'reg': float(row['regular_ms']), 'dsm': float(row['dsmem_ms'])}
+Ns = sorted(data.keys())
+clusters = sorted(data[Ns[0]].keys())
 x = np.arange(len(Ns))
-width = 0.35
-plt.figure(figsize=(8,4))
-plt.bar(x - width/2, reg, width, label='regular')
-plt.bar(x + width/2, dsm, width, label='dsmem cluster=8')
-plt.xticks(x, [str(n) for n in Ns])
+width = 0.25
+plt.figure(figsize=(12,6))
+for i, c in enumerate(clusters):
+    dsm_times = [data[n][c]['dsm'] for n in Ns]
+    plt.bar(x + i*width, dsm_times, width, label=f'DSMEM cluster={c}')
+plt.xticks(x + width, [str(n) for n in Ns])
 plt.xlabel('Matrix Size')
 plt.ylabel('Execution Time (ms)')
-plt.title('MatMul: Regular vs DSMEM Performance')
+plt.title('DSMEM Performance by Cluster Size')
 plt.legend()
 plt.tight_layout()
 img = os.path.splitext(os.environ['CSV_PATH'])[0] + '.png'
