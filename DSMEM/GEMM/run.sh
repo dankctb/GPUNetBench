@@ -8,10 +8,13 @@ make clean
 make all
 
 # Vary matrix sizes; fixed cluster=8 and block=16 sizes are in code
-sizes=(512 1024 2048 4096)
+sizes=(512 1024 2048 4096 8192 16384)
 
 OUT_CSV="results_matmul_comparison.csv"
 echo "N,regular_ms,dsmem_ms" > "$OUT_CSV"
+
+nvidia-smi -pm 1 # Enable persistent mode
+nvidia-smi -ac 1410,1830
 
 for N in "${sizes[@]}"; do
   echo -n "$N,"

@@ -1,5 +1,8 @@
-#include <stdio.h>
-#include <cuda_runtime.h>
+// Thread block size = 16x16 = 256 threads per block
+#define BLOCK_SIZE 32
+
+#include <iostream>
+#include <cstdlib>
 
 // Matrices are stored in row-major order:
 // M(row, col) = *(M.elements + row * M.stride + col)
@@ -7,16 +10,16 @@ typedef struct {
     int width;
     int height;
     int stride;
-    float* elements;
+    int* elements;
 } Matrix;
 // Get a matrix element
-__device__ float GetElement(const Matrix A, int row, int col)
+__device__ int GetElement(const Matrix A, int row, int col)
 {
     return A.elements[row * A.stride + col];
 }
 // Set a matrix element
 __device__ void SetElement(Matrix A, int row, int col,
-                           float value)
+                           int value)
 {
     A.elements[row * A.stride + col] = value;
 }
@@ -33,48 +36,71 @@ __device__ void SetElement(Matrix A, int row, int col,
                                          + BLOCK_SIZE * col];
     return Asub;
 }
-// Thread block size
-#define BLOCK_SIZE 16
 // Forward declaration of the matrix multiplication kernel
 __global__ void MatMulKernel(const Matrix, const Matrix, Matrix);
-// Matrix multiplication with timing
-float MatMul(const Matrix A, const Matrix B, Matrix C)
+// Matrix multiplication - Host code
+// Matrix dimensions are assumed to be multiples of BLOCK_SIZE
+void MatMul(const Matrix A, const Matrix B, Matrix C)
 {
+    // Load A and B to device memory
+    Matrix d_A;
+    d_A.width = d_A.stride = A.width; d_A.height = A.height;
+    size_t size = A.width * A.height * sizeof(int);
+    cudaMalloc(&d_A.elements, size);
+    cudaMemcpy(d_A.elements, A.elements, size,
+               cudaMemcpyHostToDevice);
+    Matrix d_B;
+    d_B.width = d_B.stride = B.width; d_B.height = B.height;
+    size = B.width * B.height * sizeof(int);
+    cudaMalloc(&d_B.elements, size);
+    cudaMemcpy(d_B.elements, B.elements, size,
+    cudaMemcpyHostToDevice);
+    // Allocate C in device memory
+    Matrix d_C;
+    d_C.width = d_C.stride = C.width; d_C.height = C.height;
+    size = C.width * C.height * sizeof(int);
+    cudaMalloc(&d_C.elements, size);
+    // Invoke kernel
+    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
+    dim3 dimGrid(B.width / dimBlock.x, A.height / dimBlock.y);
+    
+    // Create timing events
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
     
-    Matrix d_A, d_B, d_C;
-    d_A.width = d_A.stride = A.width; d_A.height = A.height;
-    size_t size = A.width * A.height * sizeof(float);
-    cudaMalloc(&d_A.elements, size);
-    cudaMemcpy(d_A.elements, A.elements, size, cudaMemcpyHostToDevice);
-    
-    d_B.width = d_B.stride = B.width; d_B.height = B.height;
-    size = B.width * B.height * sizeof(float);
-    cudaMalloc(&d_B.elements, size);
-    cudaMemcpy(d_B.elements, B.elements, size, cudaMemcpyHostToDevice);
-    
-    d_C.width = d_C.stride = C.width; d_C.height = C.height;
-    size = C.width * C.height * sizeof(float);
-    cudaMalloc(&d_C.elements, size);
-    
-    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 dimGrid(B.width / dimBlock.x, A.height / dimBlock.y);
-    
+    // Record start time
     cudaEventRecord(start);
     MatMulKernel<<<dimGrid, dimBlock>>>(d_A, d_B, d_C);
     cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
+
+    // Check for kernel launch errors and synchronize
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        std::cout << "Kernel launch error: " << cudaGetErrorString(err) << std::endl;
+    }
+    cudaDeviceSynchronize();
+    err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        std::cout << "Post-kernel error: " << cudaGetErrorString(err) << std::endl;
+    }
     
+    // Calculate and print execution time
+    cudaEventSynchronize(stop);
     float milliseconds = 0;
     cudaEventElapsedTime(&milliseconds, start, stop);
+    std::cout << "Kernel execution time: " << milliseconds << " ms" << std::endl;
     
-    cudaMemcpy(C.elements, d_C.elements, size, cudaMemcpyDeviceToHost);
-    cudaFree(d_A.elements); cudaFree(d_B.elements); cudaFree(d_C.elements);
-    cudaEventDestroy(start); cudaEventDestroy(stop);
-    
-    return milliseconds;
+    // Clean up events
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+    // Read C from device memory
+    cudaMemcpy(C.elements, d_C.elements, size,
+               cudaMemcpyDeviceToHost);
+    // Free device memory
+    cudaFree(d_A.elements);
+    cudaFree(d_B.elements);
+    cudaFree(d_C.elements);
 }
 // Matrix multiplication kernel called by MatMul()
  __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C)
@@ -86,7 +112,7 @@ float MatMul(const Matrix A, const Matrix B, Matrix C)
     Matrix Csub = GetSubMatrix(C, blockRow, blockCol);
     // Each thread computes one element of Csub
     // by accumulating results into Cvalue
-    float Cvalue = 0;
+    int Cvalue = 0;
     // Thread row and column within Csub
     int row = threadIdx.y;
     int col = threadIdx.x;
@@ -100,8 +126,8 @@ float MatMul(const Matrix A, const Matrix B, Matrix C)
         // Get sub-matrix Bsub of B
         Matrix Bsub = GetSubMatrix(B, m, blockCol);
         // Shared memory used to store Asub and Bsub respectively
-        __shared__ float As[BLOCK_SIZE][BLOCK_SIZE];
-        __shared__ float Bs[BLOCK_SIZE][BLOCK_SIZE];
+        __shared__ int As[BLOCK_SIZE][BLOCK_SIZE];
+        __shared__ int Bs[BLOCK_SIZE][BLOCK_SIZE];
         // Load Asub and Bsub from device memory to shared memory
         // Each thread loads one element of each sub-matrix
         As[row][col] = GetElement(Asub, row, col);
@@ -122,35 +148,113 @@ float MatMul(const Matrix A, const Matrix B, Matrix C)
     SetElement(Csub, row, col, Cvalue);
 }
 
+// Test function to check kernel correctness
+bool testMatMulCorrectness() {
+    int size = 64; // Small size for quick testing
+    
+    // Allocate host matrices
+    Matrix A, B, C, C_ref;
+    A.width = A.height = A.stride = size;
+    B.width = B.height = B.stride = size;
+    C.width = C.height = C.stride = size;
+    C_ref.width = C_ref.height = C_ref.stride = size;
+    
+    A.elements = (int*)malloc(size * size * sizeof(int));
+    B.elements = (int*)malloc(size * size * sizeof(int));
+    C.elements = (int*)malloc(size * size * sizeof(int));
+    C_ref.elements = (int*)malloc(size * size * sizeof(int));
+    
+    // Initialize matrices with known values
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            A.elements[i * size + j] = i + 1;
+            B.elements[i * size + j] = j + 1;
+        }
+    }
+    
+    // Compute reference result on CPU
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            int sum = 0;
+            for (int k = 0; k < size; k++) {
+                sum += A.elements[i * size + k] * B.elements[k * size + j];
+            }
+            C_ref.elements[i * size + j] = sum;
+        }
+    }
+    
+    // Compute GPU result
+    MatMul(A, B, C);
+    
+    // Compare results
+    bool correct = true;
+    for (int i = 0; i < size * size; i++) {
+        if (C.elements[i] != C_ref.elements[i]) {
+            correct = false;
+            std::cout << "Mismatch at index " << i << ": GPU=" << C.elements[i] 
+                     << " CPU=" << C_ref.elements[i] << std::endl;
+            break;
+        }
+    }
+    
+    // Clean up
+    free(A.elements);
+    free(B.elements);
+    free(C.elements);
+    free(C_ref.elements);
+    
+    return correct;
+}
+
+// Test main function
 int main(int argc, char* argv[]) {
     if (argc != 2) {
-        printf("Usage: %s <matrix_size>\n", argv[0]);
+        std::cout << "Usage: " << argv[0] << " <matrix_size>" << std::endl;
         return 1;
     }
     
-    int N = atoi(argv[1]);
-    if (N % BLOCK_SIZE != 0) {
-        printf("Matrix size must be multiple of %d\n", BLOCK_SIZE);
+    int size = atoi(argv[1]);
+    if (size % BLOCK_SIZE != 0) {
+        std::cout << "Matrix size must be multiple of " << BLOCK_SIZE << std::endl;
         return 1;
     }
     
+    // First test correctness
+    std::cout << "Testing kernel correctness..." << std::endl;
+    bool isCorrect = testMatMulCorrectness();
+    if (isCorrect) {
+        std::cout << "✓ Kernel correctness test PASSED" << std::endl;
+    } else {
+        std::cout << "✗ Kernel correctness test FAILED" << std::endl;
+        return 1;
+    }
+    // ---------------------------------------------------------------
+    // Then run performance test
+    std::cout << "\nRunning performance test..." << std::endl;
+    
+    // Allocate host matrices
     Matrix A, B, C;
-    A.width = A.stride = A.height = N;
-    B.width = B.stride = B.height = N;
-    C.width = C.stride = C.height = N;
+    A.width = A.height = A.stride = size;
+    B.width = B.height = B.stride = size;
+    C.width = C.height = C.stride = size;
     
-    A.elements = (float*)malloc(N * N * sizeof(float));
-    B.elements = (float*)malloc(N * N * sizeof(float));
-    C.elements = (float*)malloc(N * N * sizeof(float));
+    A.elements = (int*)malloc(size * size * sizeof(int));
+    B.elements = (int*)malloc(size * size * sizeof(int));
+    C.elements = (int*)malloc(size * size * sizeof(int));
     
-    for (int i = 0; i < N * N; i++) {
-        A.elements[i] = (float)(rand() % 100) / 10.0f;
-        B.elements[i] = (float)(rand() % 100) / 10.0f;
+    // Initialize matrices with simple values
+    for (int i = 0; i < size * size; i++) {
+        A.elements[i] = 1;
+        B.elements[i] = 2;
     }
     
-    float time_ms = MatMul(A, B, C);
-    printf("%d,%.3f\n", N, time_ms);
+    // Perform matrix multiplication
+    MatMul(A, B, C);
     
-    free(A.elements); free(B.elements); free(C.elements);
+    // Clean up
+    free(A.elements);
+    free(B.elements);
+    free(C.elements);
+    
     return 0;
 }
