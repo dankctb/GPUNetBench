@@ -3,34 +3,28 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-echo "Building matmul H100 program..."
+echo "Building matmul programs..."
 make clean
-make matmul_h100
+make all
 
-GPU_INFO=$(nvidia-smi --query-gpu=name --format=csv,noheader,nounits | head -1)
+# Vary matrix sizes; fixed cluster=8 and block=16 sizes are in code
+sizes=(512 1024 2048 4096)
 
-if [[ "$GPU_INFO" != *"H100"* ]]; then
-  echo "No Hopper GPU Architecture detected" >&2
-  exit 1
-fi
+OUT_CSV="results_matmul_comparison.csv"
+echo "N,regular_ms,dsmem_ms" > "$OUT_CSV"
 
-# Fixed input size, vary cluster sizes
-N=${1:-4096}
-clusters=(0 1 2 4 8 16)
-
-OUT_CSV="results_matmul_h100_N${N}.csv"
-echo "N,cluster_size,latency_ms" > "$OUT_CSV"
-
-for c in "${clusters[@]}"; do
-  ./matmul_h100 $N $c | tee -a "$OUT_CSV"
-done
+for N in "${sizes[@]}"; do
+  echo -n "$N,"
+  ./matmul "$N" | cut -d',' -f2 | tr -d '\n'
+  echo -n ","
+  ./matmul_h100 "$N" | cut -d',' -f2
+done >> "$OUT_CSV"
 
 echo "Wrote $OUT_CSV"
 
-# Plot bar chart using python + matplotlib if available
+# Plot comparison if matplotlib available
 CSV_PATH="$OUT_CSV" python3 - <<'PY' || true
 import os, csv
-csv_path = os.environ.get('CSV_PATH')
 try:
     import matplotlib
     matplotlib.use('Agg')
@@ -38,21 +32,26 @@ try:
 except Exception as e:
     print('Skipping plot (matplotlib not available):', e)
     raise SystemExit(0)
-xs, ys = [], []
-with open(csv_path) as f:
+Ns, reg, dsm = [], [], []
+with open(os.environ['CSV_PATH']) as f:
     r = csv.DictReader(f)
     for row in r:
-        xs.append(int(row['cluster_size']))
-        ys.append(float(row['latency_ms']))
-import os
-import matplotlib.pyplot as plt
-plt.figure(figsize=(6,3))
-plt.bar([str(x) for x in xs], ys)
-plt.xlabel('cluster_size')
-plt.ylabel('latency (ms)')
-plt.title('MatMul H100 DSMEM sweep')
+        Ns.append(int(row['N']))
+        reg.append(float(row['regular_ms']))
+        dsm.append(float(row['dsmem_ms']))
+import numpy as np
+x = np.arange(len(Ns))
+width = 0.35
+plt.figure(figsize=(8,4))
+plt.bar(x - width/2, reg, width, label='regular')
+plt.bar(x + width/2, dsm, width, label='dsmem cluster=8')
+plt.xticks(x, [str(n) for n in Ns])
+plt.xlabel('Matrix Size')
+plt.ylabel('Execution Time (ms)')
+plt.title('MatMul: Regular vs DSMEM Performance')
+plt.legend()
 plt.tight_layout()
-img = os.path.splitext(csv_path)[0] + '.png'
+img = os.path.splitext(os.environ['CSV_PATH'])[0] + '.png'
 plt.savefig(img, dpi=150)
 print('Saved', img)
 PY
