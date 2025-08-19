@@ -9,22 +9,23 @@ make all
 
 # Vary matrix sizes and cluster sizes
 sizes=(512 1024 2048)
-#cluster_sizes=(2 4 8)
-cluster_sizes=(4)
-OUT_CSV="results_matmul_comparison.csv"
-echo "N,cluster_size,regular_ms,dsmem_ms" > "$OUT_CSV"
+cluster_sizes=(2 4 8)
+OUT_CSV="results_matmul_dsm_comparison.csv"
+echo "N,cluster_size,regular_ms,dsm_optimized_ms" > "$OUT_CSV"
 
 nvidia-smi -pm 1 # Enable persistent mode
 # run this to find the supported clock combinations
 # nvidia-smi --query-supported-clocks=mem,gr --format=csv
-nvidia-smi -ac 1410,1830 # h100 does not support this combination
+# nvidia-smi -ac 1410,1830 # h100 does not support this combination
 
 for N in "${sizes[@]}"; do
   for C in "${cluster_sizes[@]}"; do
     echo -n "$N,$C,"
+    # Regular baseline (original implementation)
     ./matmul "$N" | cut -d',' -f2 | tr -d '\n'
     echo -n ","
-    ./matmul_h100 "$N" "$C" | cut -d',' -f2
+    # DSM optimized with specified cluster size
+    ./matmul_dsm "$N" "$C"
   done
 done >> "$OUT_CSV"
 
@@ -48,7 +49,7 @@ with open(os.environ['CSV_PATH']) as f:
         n = int(row['N'])
         c = int(row['cluster_size'])
         if n not in data: data[n] = {}
-        data[n][c] = {'reg': float(row['regular_ms']), 'dsm': float(row['dsmem_ms'])}
+        data[n][c] = {'reg': float(row['regular_ms']), 'dsm': float(row['dsm_optimized_ms'])}
 Ns = sorted(data.keys())
 clusters = sorted(data[Ns[0]].keys())
 x = np.arange(len(Ns))
@@ -56,11 +57,11 @@ width = 0.25
 plt.figure(figsize=(12,6))
 for i, c in enumerate(clusters):
     dsm_times = [data[n][c]['dsm'] for n in Ns]
-    plt.bar(x + i*width, dsm_times, width, label=f'DSMEM cluster={c}')
+    plt.bar(x + i*width, dsm_times, width, label=f'DSM cluster={c}')
 plt.xticks(x + width, [str(n) for n in Ns])
 plt.xlabel('Matrix Size')
 plt.ylabel('Execution Time (ms)')
-plt.title('DSMEM Performance by Cluster Size')
+plt.title('DSM-Optimized Matrix Multiplication Performance by Cluster Size')
 plt.legend()
 plt.tight_layout()
 img = os.path.splitext(os.environ['CSV_PATH'])[0] + '.png'
