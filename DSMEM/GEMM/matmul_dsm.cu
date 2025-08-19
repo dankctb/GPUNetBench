@@ -53,15 +53,15 @@ __global__ void MatMulKernelDSM(Matrix A, Matrix B, Matrix C, int clusterSize) {
         Matrix Asub = GetSubMatrix(A, blockRow, m);
         Matrix Bsub = GetSubMatrix(B, m, blockCol);
         
-        // DSM optimization: Load tiles cooperatively across cluster
-        // Each block in cluster loads a portion, others access via DSM
-        bool shouldLoadA = (myRank < clusterSize / 2);
-        bool shouldLoadB = (myRank % 2 == 0);
+        // DSM optimization: All blocks participate in loading
+        // Each block loads a portion of both A and B tiles
+        int rowsPerBlock = BLOCK_SIZE / clusterSize;
+        int myRowStart = myRank * rowsPerBlock;
+        int myRowEnd = (myRank + 1) * rowsPerBlock;
         
-        if (shouldLoadA) {
+        // Load assigned rows of both A and B tiles
+        if (row >= myRowStart && row < myRowEnd) {
             As[row][col] = GetElement(Asub, row, col);
-        }
-        if (shouldLoadB) {
             Bs[row][col] = GetElement(Bsub, row, col);
         }
         
@@ -72,21 +72,21 @@ __global__ void MatMulKernelDSM(Matrix A, Matrix B, Matrix C, int clusterSize) {
         for (int e = 0; e < BLOCK_SIZE; ++e) {
             int a_val, b_val;
             
-            if (shouldLoadA) {
+            // Determine which block owns As[row][e]
+            int a_owner = row / rowsPerBlock;
+            if (a_owner == myRank) {
                 a_val = As[row][e];
             } else {
-                // Access from remote block's shared memory
-                int remote_rank = myRank < clusterSize / 2 ? myRank : myRank - clusterSize / 2;
-                int (*As_remote)[BLOCK_SIZE] = cluster.map_shared_rank(As, remote_rank);
+                int (*As_remote)[BLOCK_SIZE] = cluster.map_shared_rank(As, a_owner);
                 a_val = As_remote[row][e];
             }
             
-            if (shouldLoadB) {
+            // Determine which block owns Bs[e][col]  
+            int b_owner = e / rowsPerBlock;
+            if (b_owner == myRank) {
                 b_val = Bs[e][col];
             } else {
-                // Access from remote block's shared memory  
-                int remote_rank = (myRank % 2 == 0) ? myRank : myRank - 1;
-                int (*Bs_remote)[BLOCK_SIZE] = cluster.map_shared_rank(Bs, remote_rank);
+                int (*Bs_remote)[BLOCK_SIZE] = cluster.map_shared_rank(Bs, b_owner);
                 b_val = Bs_remote[e][col];
             }
             
