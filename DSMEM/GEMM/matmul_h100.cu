@@ -75,9 +75,7 @@ void MatMul(const Matrix A, const Matrix B, Matrix C, int clusterSize)
 
     // Allow non-portable cluster size and launch with cluster dimension on H100
     cudaFuncSetAttribute(MatMulKernel, cudaFuncAttributeNonPortableClusterSizeAllowed, 1);
-    
-    // Record start time
-    cudaEventRecord(start);
+
     
     if (clusterSize > 1) {
         // Use cluster launch for DSMEM features
@@ -95,8 +93,12 @@ void MatMul(const Matrix A, const Matrix B, Matrix C, int clusterSize)
         config.attrs = attribute;
         config.numAttrs = 1;
         
+        // Record start time
+        cudaEventRecord(start);
         cudaLaunchKernelEx(&config, MatMulKernel, d_A, d_B, d_C, clusterSize);
     } else {
+        // Record start time
+        cudaEventRecord(start);
         // Standard kernel launch for single block clusters
         MatMulKernel<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, clusterSize);
     }
@@ -193,7 +195,7 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C, int clusterSize)
             int a_val, b_val;
             
             // Access A value (use DSMEM if not in my block's loaded rows)
-            int a_owner = (e < BLOCK_SIZE/2) ? (myRank < 2 ? myRank : myRank - 2) : (myRank < 2 ? myRank + 2 : myRank);
+            int a_owner = (row < BLOCK_SIZE/2) ? 0 : (clusterSize >= 4 ? 2 : 1);
             if (a_owner != myRank) {
                 int (*As_remote)[BLOCK_SIZE] = cluster.map_shared_rank(As, a_owner);
                 a_val = As_remote[row][e];
@@ -202,7 +204,7 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C, int clusterSize)
             }
             
             // Access B value (use DSMEM if not in my block's loaded columns)
-            int b_owner = (e < BLOCK_SIZE/2) ? (myRank % 2 == 0 ? myRank : myRank - 1) : (myRank % 2 == 0 ? myRank + 1 : myRank);
+            int b_owner = (col < BLOCK_SIZE/2) ? 0 : 1;
             if (b_owner != myRank) {
                 int (*Bs_remote)[BLOCK_SIZE] = cluster.map_shared_rank(Bs, b_owner);
                 b_val = Bs_remote[e][col];
@@ -224,7 +226,7 @@ __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C, int clusterSize)
 
 // Test function to check kernel correctness
 bool testMatMulCorrectness() {
-    int size = 32; // Small size for quick testing
+    int size = 64; // Use 64 so gridDim.x is a multiple of clusterDim.x (4)
     
     // Allocate host matrices
     Matrix A, B, C, C_ref;
@@ -258,7 +260,7 @@ bool testMatMulCorrectness() {
     }
     
     // Compute GPU result
-    MatMul(A, B, C, 1);
+    MatMul(A, B, C, 4);
     
     // Compare results
     bool correct = true;
@@ -308,11 +310,11 @@ int main(int argc, char* argv[]) {
         std::cout << "\n✗ Kernel correctness test FAILED" << std::endl;
         return 1;
     }
-    ---------------------------------------------------------------
-    Then run performance test
+    // ---------------------------------------------------------------
+    // Then run performance test
     std::cout << "\nRunning performance measurement..." << std::endl;
     
-    Allocate host matrices
+    //Allocate host matrices
 
     Matrix A, B, C;
     A.width = A.height = A.stride = size;
