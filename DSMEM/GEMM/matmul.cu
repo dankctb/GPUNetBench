@@ -1,5 +1,5 @@
 // Thread block size = 16x16 = 256 threads per block
-#define BLOCK_SIZE 32
+#define BLOCK_SIZE 16
 
 #include <iostream>
 #include <cstdlib>

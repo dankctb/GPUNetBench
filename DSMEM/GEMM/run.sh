@@ -8,14 +8,16 @@ make clean
 make all
 
 # Vary matrix sizes and cluster sizes
-sizes=(512 1024 2048 4096 8192 16384)
-cluster_sizes=(2 4 8)
-
+sizes=(512 1024 2048)
+#cluster_sizes=(2 4 8)
+cluster_sizes=(4)
 OUT_CSV="results_matmul_comparison.csv"
 echo "N,cluster_size,regular_ms,dsmem_ms" > "$OUT_CSV"
 
 nvidia-smi -pm 1 # Enable persistent mode
-nvidia-smi -ac 1410,1830
+# run this to find the supported clock combinations
+# nvidia-smi --query-supported-clocks=mem,gr --format=csv
+nvidia-smi -ac 1410,1830 # h100 does not support this combination
 
 for N in "${sizes[@]}"; do
   for C in "${cluster_sizes[@]}"; do

@@ -1,5 +1,6 @@
 // Thread block size = 16x16 = 256 threads per block
-#define BLOCK_SIZE 32
+#define BLOCK_SIZE 16
+#define CLUSTER_SIZE 4
 
 #include <iostream>
 #include <cstdlib>
@@ -77,10 +78,29 @@ void MatMul(const Matrix A, const Matrix B, Matrix C, int clusterSize)
     
     // Record start time
     cudaEventRecord(start);
-    {
-        // Fallback to standard kernel launch when clusterDim is not available
+    
+    if (clusterSize > 1) {
+        // Use cluster launch for DSMEM features
+        cudaLaunchConfig_t config = {0};
+        config.gridDim = dimGrid;
+        config.blockDim = dimBlock;
+        config.dynamicSmemBytes = 0;
+        config.stream = 0;
+        
+        cudaLaunchAttribute attribute[1];
+        attribute[0].id = cudaLaunchAttributeClusterDimension;
+        attribute[0].val.clusterDim.x = clusterSize;
+        attribute[0].val.clusterDim.y = 1;
+        attribute[0].val.clusterDim.z = 1;
+        config.attrs = attribute;
+        config.numAttrs = 1;
+        
+        cudaLaunchKernelEx(&config, MatMulKernel, d_A, d_B, d_C, clusterSize);
+    } else {
+        // Standard kernel launch for single block clusters
         MatMulKernel<<<dimGrid, dimBlock>>>(d_A, d_B, d_C, clusterSize);
     }
+    
     cudaEventRecord(stop);
 
     // Check for kernel launch errors and synchronize
@@ -112,7 +132,7 @@ void MatMul(const Matrix A, const Matrix B, Matrix C, int clusterSize)
     cudaFree(d_C.elements);
 }
 // Matrix multiplication kernel called by MatMul()
- __global__ void MatMulKernel(Matrix A, Matrix B, Matrix C, int clusterSize)
+__global__ void MatMulKernel(Matrix A, Matrix B, Matrix C, int clusterSize)
 {
     // Block row and column
     int blockRow = blockIdx.y;
@@ -121,7 +141,6 @@ void MatMul(const Matrix A, const Matrix B, Matrix C, int clusterSize)
     // Cluster group (H100 DSMEM)
     cg::cluster_group cluster = cg::this_cluster();
     int myRank = cluster.block_rank();
-    int colsPerRank = (clusterSize > 0) ? (BLOCK_SIZE / max(1, clusterSize)) : BLOCK_SIZE;
 
     // Each thread block computes one sub-matrix Csub of C
     Matrix Csub = GetSubMatrix(C, blockRow, blockCol);
@@ -131,6 +150,7 @@ void MatMul(const Matrix A, const Matrix B, Matrix C, int clusterSize)
     // Thread row and column within Csub
     int row = threadIdx.y;
     int col = threadIdx.x;
+    
     // Loop over all the sub-matrices of A and B that are
     // required to compute Csub
     // Multiply each pair of sub-matrices together
@@ -140,37 +160,59 @@ void MatMul(const Matrix A, const Matrix B, Matrix C, int clusterSize)
         Matrix Asub = GetSubMatrix(A, blockRow, m);
         // Get sub-matrix Bsub of B
         Matrix Bsub = GetSubMatrix(B, m, blockCol);
+        
         // Shared memory used to store Asub and Bsub respectively
         __shared__ int As[BLOCK_SIZE][BLOCK_SIZE];
         __shared__ int Bs[BLOCK_SIZE][BLOCK_SIZE];
-        // Load Asub cooperatively across the cluster: each block loads a slice of columns
-        int colStart = myRank * colsPerRank;
-        int colEnd   = min(BLOCK_SIZE, colStart + colsPerRank);
-        if (col >= colStart && col < colEnd) {
+        
+        // Optimized loading: each tile loaded once and divided among 4 blocks
+        // For A tile: blocks 0,1 load first half rows, blocks 2,3 load second half rows
+        int rowStart = (myRank < 2) ? 0 : BLOCK_SIZE/2;
+        int rowEnd = (myRank < 2) ? BLOCK_SIZE/2 : BLOCK_SIZE;
+        
+        // Load Asub cooperatively - each block loads assigned rows
+        if (row >= rowStart && row < rowEnd) {
             As[row][col] = GetElement(Asub, row, col);
         }
-        // Load Bsub locally (distinct per block)
-        Bs[row][col] = GetElement(Bsub, row, col);
-        // Synchronize within block and across cluster to ensure As slices are ready
+        
+        // For B tile: blocks 0,2 load first half cols, blocks 1,3 load second half cols  
+        int colStart = (myRank % 2 == 0) ? 0 : BLOCK_SIZE/2;
+        int colEnd = (myRank % 2 == 0) ? BLOCK_SIZE/2 : BLOCK_SIZE;
+        
+        // Load Bsub cooperatively - each block loads assigned columns
+        if (col >= colStart && col < colEnd) {
+            Bs[row][col] = GetElement(Bsub, row, col);
+        }
+        
+        // Synchronize within block and across cluster to ensure tiles are ready
         __syncthreads();
-
         cluster.sync();
-        // Multiply Asub and Bsub together using DSMEM for remote As columns
+        
+        // Multiply Asub and Bsub together using DSMEM for remote data
         for (int e = 0; e < BLOCK_SIZE; ++e) {
-            int a_val;
-            if (clusterSize > 1) {
-                int owner = e / colsPerRank;
-                if (owner != myRank) {
-                    int (*As_remote)[BLOCK_SIZE] = cluster.map_shared_rank(As, owner);
-                    a_val = As_remote[row][e];
-                } else {
-                    a_val = As[row][e];
-                }
+            int a_val, b_val;
+            
+            // Access A value (use DSMEM if not in my block's loaded rows)
+            int a_owner = (e < BLOCK_SIZE/2) ? (myRank < 2 ? myRank : myRank - 2) : (myRank < 2 ? myRank + 2 : myRank);
+            if (a_owner != myRank) {
+                int (*As_remote)[BLOCK_SIZE] = cluster.map_shared_rank(As, a_owner);
+                a_val = As_remote[row][e];
             } else {
                 a_val = As[row][e];
             }
-            Cvalue += a_val * Bs[e][col];
+            
+            // Access B value (use DSMEM if not in my block's loaded columns)
+            int b_owner = (e < BLOCK_SIZE/2) ? (myRank % 2 == 0 ? myRank : myRank - 1) : (myRank % 2 == 0 ? myRank + 1 : myRank);
+            if (b_owner != myRank) {
+                int (*Bs_remote)[BLOCK_SIZE] = cluster.map_shared_rank(Bs, b_owner);
+                b_val = Bs_remote[e][col];
+            } else {
+                b_val = Bs[e][col];
+            }
+            
+            Cvalue += a_val * b_val;
         }
+        
         // Synchronize before next tile load
         __syncthreads();
         cluster.sync();
@@ -246,7 +288,8 @@ int main(int argc, char* argv[]) {
     }
     
     int size = atoi(argv[1]);
-    int clusterSize = atoi(argv[2]);
+    //int clusterSize = atoi(argv[2]);
+    int clusterSize = CLUSTER_SIZE;
     if (size % BLOCK_SIZE != 0) {
         std::cout << "Matrix size must be multiple of " << BLOCK_SIZE << std::endl;
         return 1;
@@ -257,19 +300,20 @@ int main(int argc, char* argv[]) {
     }
     
     // First test correctness
-    // std::cout << "Testing kernel correctness..." << std::endl;
-    // bool isCorrect = testMatMulCorrectness();
-    // if (isCorrect) {
-    //     std::cout << "✓ Kernel correctness test PASSED" << std::endl;
-    // } else {
-    //     std::cout << "✗ Kernel correctness test FAILED" << std::endl;
-    //     return 1;
-    // }
-    // ---------------------------------------------------------------
-    // Then run performance test
-    // std::cout << "\nRunning performance test..." << std::endl;
+    std::cout << "\nTesting kernel correctness..." << std::endl;
+    bool isCorrect = testMatMulCorrectness();
+    if (isCorrect) {
+        std::cout << "\n✓ Kernel correctness test PASSED" << std::endl;
+    } else {
+        std::cout << "\n✗ Kernel correctness test FAILED" << std::endl;
+        return 1;
+    }
+    ---------------------------------------------------------------
+    Then run performance test
+    std::cout << "\nRunning performance measurement..." << std::endl;
     
-    // Allocate host matrices
+    Allocate host matrices
+
     Matrix A, B, C;
     A.width = A.height = A.stride = size;
     B.width = B.height = B.stride = size;
